@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>ORPHIS印刷補助ツール｜PDFページ番号メーカー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <style>
+    :root{
+      --main:#1557a6;
+      --accent:#ffb000;
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line:#d6dde8;
+      --danger:#d72638;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Yu Gothic","Meiryo",system-ui,sans-serif;
+      background:linear-gradient(180deg,#eaf2ff 0%,#f7f9fc 45%,#fff 100%);
+      color:var(--text);
+    }
+    .wrap{
+      width:min(1180px,94vw);
+      margin:28px auto 42px;
+    }
+    header{
+      display:flex;
+      gap:18px;
+      align-items:center;
+      margin-bottom:18px;
+    }
+    .logo{
+      width:72px;height:72px;
+      border-radius:22px;
+      background:var(--main);
+      color:#fff;
+      display:grid;
+      place-items:center;
+      font-weight:900;
+      line-height:1.05;
+      box-shadow:0 10px 24px rgba(21,87,166,.24);
+    }
+    .logo span{font-size:14px;text-align:center}
+    h1{
+      margin:0;
+      font-size:30px;
+      letter-spacing:.02em;
+    }
+    .lead{
+      margin:7px 0 0;
+      color:var(--muted);
+      font-size:15px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:22px;
+    }
+    .card{
+      background:rgba(255,255,255,.94);
+      border:1px solid var(--line);
+      border-radius:24px;
+      box-shadow:0 12px 34px rgba(31,41,55,.08);
+      padding:22px;
+    }
+    .drop{
+      border:3px dashed #9bb7d9;
+      border-radius:22px;
+      background:#f9fcff;
+      min-height:220px;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      transition:.18s;
+      padding:24px;
+    }
+    .drop.drag{
+      background:#eaf4ff;
+      border-color:var(--main);
+      transform:scale(1.01);
+    }
+    .drop strong{
+      display:block;
+      font-size:24px;
+      color:var(--main);
+      margin-bottom:8px;
+    }
+    .drop p{
+      margin:0;
+      color:var(--muted);
+    }
+    input[type="file"]{display:none}
+    .filebtn,.runbtn,.subbtn{
+      appearance:none;
+      border:none;
+      border-radius:999px;
+      padding:13px 22px;
+      font-weight:800;
+      cursor:pointer;
+      font-size:15px;
+    }
+    .filebtn{
+      background:#fff;
+      color:var(--main);
+      border:2px solid var(--main);
+      margin-top:18px;
+      display:inline-block;
+    }
+    .runbtn{
+      width:100%;
+      background:linear-gradient(90deg,var(--danger),#ff7a00);
+      color:white;
+      font-size:20px;
+      padding:18px;
+      margin-top:18px;
+      box-shadow:0 12px 24px rgba(215,38,56,.22);
+    }
+    .runbtn:disabled{opacity:.48;cursor:not-allowed}
+    .subbtn{
+      background:#eef4fb;
+      color:#1b4f86;
+      margin-top:10px;
+    }
+    .settings{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin-top:18px;
+    }
+    label.box{
+      display:block;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      background:#fff;
+    }
+    .box span{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:6px;
+      font-weight:700;
+    }
+    input[type="number"],select{
+      width:100%;
+      border:1px solid #cbd5e1;
+      border-radius:12px;
+      padding:11px 12px;
+      font-size:16px;
+      background:#fff;
+    }
+    .checks{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:18px;
+    }
+    .check{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:13px;
+      background:#fff;
+    }
+    .check input{transform:scale(1.25);margin-top:3px}
+    .check b{display:block}
+    .check small{color:var(--muted)}
+    .preview{
+      aspect-ratio:1.414/1;
+      border:2px solid #ced8e6;
+      border-radius:12px;
+      background:#fff;
+      position:relative;
+      overflow:hidden;
+      margin-top:8px;
+    }
+    .paper-title{
+      position:absolute;
+      left:38px;top:30px;
+      font-size:24px;
+      font-weight:900;
+      color:#c6ced8;
+    }
+    .demo-mark{
+      position:absolute;
+      top:20px;
+      right:24px;
+      font-size:22px;
+      color:#d72638;
+      font-weight:900;
+      border:3px solid #d72638;
+      padding:5px 13px;
+      border-radius:999px;
+      opacity:.75;
+    }
+    .demo-date{
+      position:absolute;
+      left:18px;
+      bottom:15px;
+      color:#a1a9b5;
+      font-size:10px;
+    }
+    .demo-no{
+      position:absolute;
+      right:18px;
+      bottom:15px;
+      color:#8c96a5;
+      font-size:10px;
+    }
+    .note{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.65;
+      margin-top:14px;
+    }
+    .status{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:#f1f5f9;
+      color:#334155;
+      min-height:48px;
+      line-height:1.55;
+      white-space:pre-wrap;
+    }
+    .downloads a{
+      display:block;
+      margin-top:10px;
+      background:#fff7e0;
+      border:1px solid #f6d37d;
+      border-radius:14px;
+      padding:12px 14px;
+      color:#7a4b00;
+      text-decoration:none;
+      font-weight:800;
+    }
+    .footer{
+      margin-top:16px;
+      color:#64748b;
+      font-size:12px;
+    }
+    @media(max-width:850px){
+      .grid{grid-template-columns:1fr}
+      .settings{grid-template-columns:1fr}
+      h1{font-size:24px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo"><span>ORPHIS<br>PDF</span></div>
+      <div>
+        <h1>ORPHIS印刷補助ツール</h1>
+        <p class="lead">A4横デフォルト／通し番号なし資料に、右下5ptの管理番号をあと付けします。</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div id="drop" class="drop">
+          <div>
+            <strong>PDFをここにドラッグ＆ドロップ</strong>
+            <p>または下のボタンからPDFを選択してください。</p>
+            <label class="filebtn">
+              PDFを選択
+              <input id="file" type="file" accept="application/pdf">
+            </label>
+          </div>
+        </div>
+
+        <div class="settings">
+          <label class="box">
+            <span>開始番号</span>
+            <input id="startNo" type="number" min="1" value="1">
+          </label>
+          <label class="box">
+            <span>番号の桁数</span>
+            <select id="digits">
+              <option value="6" selected>6桁：000001</option>
+              <option value="5">5桁：00001</option>
+              <option value="4">4桁：0001</option>
+              <option value="0">ゼロ埋めなし：1</option>
+            </select>
+          </label>
+          <label class="box">
+            <span>文字サイズ</span>
+            <select id="fontSize">
+              <option value="5" selected>5pt</option>
+              <option value="6">6pt</option>
+              <option value="7">7pt</option>
+              <option value="8">8pt</option>
+            </select>
+          </label>
+          <label class="box">
+            <span>用紙向き</span>
+            <select id="paper">
+              <option value="landscape" selected>A4横を想定</option>
+              <option value="auto">PDFの向きに合わせる</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="checks">
+          <label class="check">
+            <input id="addPageNo" type="checkbox" checked>
+            <div><b>右下に5ptページ番号を入れる</b><small>紙詰まり後の再開位置確認用。元PDFは変更しません。</small></div>
+          </label>
+          <label class="check">
+            <input id="addHundred" type="checkbox" checked>
+            <div><b>100ページごとに大きな目印を付ける</b><small>100、200、300…のページに赤い「100P」目印を右上へ入れます。</small></div>
+          </label>
+          <label class="check">
+            <input id="split500" type="checkbox" checked>
+            <div><b>500ページごとにPDFを自動分割</b><small>6000ページなら12個のPDFになります。ORPHIS印刷時の事故範囲を限定できます。</small></div>
+          </label>
+          <label class="check">
+            <input id="addDate" type="checkbox" checked>
+            <div><b>印刷日時を極小で入れる</b><small>左下に処理日時を5ptで入れます。</small></div>
+          </label>
+        </div>
+
+        <button id="run" class="runbtn" disabled>ページ番号付きPDFを作成</button>
+        <div id="status" class="status">PDFを選択してください。</div>
+        <div id="downloads" class="downloads"></div>
+      </section>
+
+      <aside class="card">
+        <h2 style="margin:0 0 8px;font-size:20px;">仕上がりイメージ（A4横）</h2>
+        <div class="preview">
+          <div class="paper-title">資料本文</div>
+          <div class="demo-mark">100P</div>
+          <div class="demo-date">PRINT 2026-07-01 10:30</div>
+          <div class="demo-no">000001</div>
+        </div>
+        <p class="note">
+          右下の番号は、通常はほとんど目立たない管理用です。紙詰まりが起きたら最後に正常印刷された番号を見て、次の番号から再印刷できます。
+        </p>
+        <p class="note">
+          このHTMLはブラウザ内でPDFを処理します。PDFを外部サーバーへアップロードしません。ただし、PDF処理ライブラリを読み込むため、初回利用時はインターネット接続が必要です。
+        </p>
+        <p class="note">
+          完全オフライン運用にしたい場合は、pdf-lib.min.jsを同じフォルダに保存して読み込む形に変更してください。
+        </p>
+      </aside>
+    </div>
+
+    <div class="footer">
+      ※大量ページPDFはPC性能により処理に時間がかかります。まずは20〜50ページのテストPDFで確認してから本番運用してください。
+    </div>
+  </div>
+
+<script>
+const { PDFDocument, StandardFonts, rgb } = PDFLib;
+
+let selectedFile = null;
+
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+const runBtn = document.getElementById('run');
+const statusBox = document.getElementById('status');
+const downloads = document.getElementById('downloads');
+
+function setStatus(msg){ statusBox.textContent = msg; }
+
+function setFile(file){
+  if(!file || file.type !== 'application/pdf'){
+    alert('PDFファイルを選択してください。');
+    return;
+  }
+  selectedFile = file;
+  runBtn.disabled = false;
+  setStatus(`選択中：${file.name}\n「ページ番号付きPDFを作成」を押してください。`);
+  downloads.innerHTML = '';
+}
+
+fileInput.addEventListener('change', e => setFile(e.target.files[0]));
+
+['dragenter','dragover'].forEach(ev => {
+  drop.addEventListener(ev, e => {
+    e.preventDefault();
+    drop.classList.add('drag');
+  });
+});
+['dragleave','drop'].forEach(ev => {
+  drop.addEventListener(ev, e => {
+    e.preventDefault();
+    drop.classList.remove('drag');
+  });
+});
+drop.addEventListener('drop', e => setFile(e.dataTransfer.files[0]));
+
+function padNumber(num, digits){
+  if(digits === 0) return String(num);
+  return String(num).padStart(digits, '0');
+}
+
+function nowText(){
+  const d = new Date();
+  const z = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+
+function downloadBlob(bytes, filename){
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.textContent = `ダウンロード：${filename}`;
+  downloads.appendChild(a);
+}
+
+function baseName(filename){
+  return filename.replace(/\.pdf$/i,'');
+}
+
+async function addMarksToDoc(srcPdf, pageIndices, options){
+  const newPdf = await PDFDocument.create();
+  const font = await newPdf.embedFont(StandardFonts.Helvetica);
+  const copied = await newPdf.copyPages(srcPdf, pageIndices);
+  copied.forEach(p => newPdf.addPage(p));
+
+  const pages = newPdf.getPages();
+  const dateLabel = `PRINT ${nowText()}`;
+
+  pages.forEach((page, localIndex) => {
+    const originalIndex = pageIndices[localIndex];
+    const pageNo = options.startNo + originalIndex;
+    const { width, height } = page.getSize();
+
+    if(options.addPageNo){
+      const noText = padNumber(pageNo, options.digits);
+      const size = options.fontSize;
+      const textWidth = font.widthOfTextAtSize(noText, size);
+      page.drawText(noText, {
+        x: width - textWidth - 14,
+        y: 10,
+        size,
+        font,
+        color: rgb(0.45,0.48,0.52),
+      });
+    }
+
+    if(options.addDate){
+      page.drawText(dateLabel, {
+        x: 14,
+        y: 10,
+        size: Math.max(5, options.fontSize),
+        font,
+        color: rgb(0.60,0.63,0.68),
+      });
+    }
+
+    if(options.addHundred && pageNo % 100 === 0){
+      const mark = `${pageNo}P`;
+      const size = 22;
+      const textWidth = font.widthOfTextAtSize(mark, size);
+      page.drawText(mark, {
+        x: width - textWidth - 18,
+        y: height - 34,
+        size,
+        font,
+        color: rgb(0.86,0.15,0.22),
+      });
+    }
+  });
+
+  return await newPdf.save();
+}
+
+runBtn.addEventListener('click', async () => {
+  if(!selectedFile) return;
+
+  runBtn.disabled = true;
+  downloads.innerHTML = '';
+  setStatus('PDFを読み込み中です…');
+
+  try{
+    const bytes = await selectedFile.arrayBuffer();
+    const srcPdf = await PDFDocument.load(bytes, { ignoreEncryption: true });
+    const pageCount = srcPdf.getPageCount();
+
+    const options = {
+      startNo: Math.max(1, parseInt(document.getElementById('startNo').value || '1', 10)),
+      digits: parseInt(document.getElementById('digits').value, 10),
+      fontSize: parseInt(document.getElementById('fontSize').value, 10),
+      addPageNo: document.getElementById('addPageNo').checked,
+      addHundred: document.getElementById('addHundred').checked,
+      split500: document.getElementById('split500').checked,
+      addDate: document.getElementById('addDate').checked,
+    };
+
+    const chunkSize = options.split500 ? 500 : pageCount;
+    const chunks = Math.ceil(pageCount / chunkSize);
+    setStatus(`全${pageCount}ページを処理します。\n分割数：${chunks}ファイル`);
+
+    for(let c=0; c<chunks; c++){
+      const start = c * chunkSize;
+      const end = Math.min(start + chunkSize, pageCount);
+      const indices = [];
+      for(let i=start; i<end; i++) indices.push(i);
+
+      setStatus(`処理中：${start+1}〜${end}ページ / 全${pageCount}ページ`);
+      await new Promise(r => setTimeout(r, 20));
+
+      const outBytes = await addMarksToDoc(srcPdf, indices, options);
+      const suffix = options.split500
+        ? `_numbered_${String(start+1).padStart(4,'0')}-${String(end).padStart(4,'0')}.pdf`
+        : `_numbered.pdf`;
+      downloadBlob(outBytes, `${baseName(selectedFile.name)}${suffix}`);
+    }
+
+    setStatus(`完了しました。\n下のリンクからPDFをダウンロードしてください。`);
+  }catch(err){
+    console.error(err);
+    setStatus('エラーが出ました。PDFが保護されている、またはブラウザで処理できない形式の可能性があります。');
+  }finally{
+    runBtn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
