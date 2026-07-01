@@ -45,7 +45,7 @@
       <div><label>番号フォントサイズ</label><input id="fontSize" type="number" min="5" max="40" value="5"></div>
       <div><label>分割単位</label><select id="splitSize"><option value="0">分割しない</option><option value="100">100ページごと</option><option value="500">500ページごと</option></select></div>
       <div><label>ページ回転</label><select id="rotate"><option value="0">回転しない</option><option value="90">右90°</option><option value="180">180°</option><option value="270">左90°</option></select></div>
-      <div><label>印刷部数メモ</label><input id="copies" type="text" placeholder="例：300部 / 予備10"></div>
+      <div><label>印刷部数メモ</label><input id="copies" type="text" placeholder="例：300部＋予備10部"></div>
     </div>
     <div class="grid" style="margin-top:10px">
       <label class="opt"><input id="mergeMode" type="checkbox" checked> 複数PDFは結合してから番号付与</label>
@@ -58,8 +58,8 @@
     <div class="grid" style="margin-top:10px">
       <div><label>削除ページ指定</label><input id="deletePages" type="text" placeholder="例：2,5,10-12"></div>
       <div><label>担当</label><input id="staff" type="text" placeholder="例：佐々木"></div>
-      <div><label>案件（加工PDFのファイル名に反映されます）</label><input id="project" type="text" placeholder="例：特報チラシ"></div>
-      <div><label>メモ</label><input id="jobMemo" type="text" placeholder="例：300部 / ORPHIS"></div>
+      <div><label>案件</label><input id="project" type="text" placeholder="例：夏DM（ファイル名に反映）"></div>
+      <div><label>メモ</label><input id="jobMemo" type="text" placeholder="例：ORPHIS"></div>
     </div>
     <p class="note">設定は自動保存されます。次回このHTMLを開いたときも前回設定を復元します。</p>
     <div class="buttons"><button id="run" class="btn primary" disabled>PDF作成</button><button id="resetSettings" class="btn secondary">設定初期化</button></div>
@@ -92,7 +92,11 @@ function dateTimeStamp(){const d=new Date();return `${d.getFullYear()}${z(d.getM
 function baseName(n){return n.replace(/\.pdf$/i,'')} function csvSafe(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
 function padNumber(num,d,raw){const width=Number(d)===0?Math.max(1,String(raw||'').replace(/\D/g,'').length):Number(d);return String(num).padStart(width,'0')}
 function saveSettings(){const o={};saveIds.forEach(id=>{const e=el(id);o[id]=e.type==='checkbox'?e.checked:e.value});localStorage.setItem('orphisPdfPlusSettings_v2',JSON.stringify(o))}
-function loadSettings(){try{const o=JSON.parse(localStorage.getItem('orphisPdfPlusSettings_v2')||'{}');saveIds.forEach(id=>{if(o[id]===undefined)return;const e=el(id); if(e.type==='checkbox')e.checked=!!o[id]; else e.value=o[id]})}catch(e){}}
+function loadSettings(){try{const o=JSON.parse(localStorage.getItem('orphisPdfPlusSettings_v2')||'{}');
+  // 旧版で例文が実値として保存されていた場合は空欄に戻す
+  const sampleValues={copies:['300部＋予備10部','300部 / 予備10'],staff:['佐々木'],project:['特報チラシ'],jobMemo:['300部 / ORPHIS①号機']};
+  saveIds.forEach(id=>{if(o[id]===undefined)return;const e=el(id); if(e.type==='checkbox'){e.checked=!!o[id]}else{let v=o[id]; if(sampleValues[id]&&sampleValues[id].includes(v))v=''; e.value=v}})
+}catch(e){}}
 saveIds.forEach(id=>el(id).addEventListener('input',saveSettings)); loadSettings();
 el('resetSettings').onclick=()=>{localStorage.removeItem('orphisPdfPlusSettings_v2');location.reload()}
 function renderFiles(){const box=el('files'); if(!selectedFiles.length){box.style.display='none';el('run').disabled=true;setStatus('PDFを選択してください。');return} box.style.display='block';box.innerHTML='';selectedFiles.forEach((f,i)=>{const row=document.createElement('div');row.className='file-row';row.innerHTML=`<div>${i+1}. ${f.name}（${(f.size/1024/1024).toFixed(2)}MB）</div><button data-i="${i}">削除</button>`;box.appendChild(row)});box.querySelectorAll('button').forEach(b=>b.onclick=()=>{selectedFiles.splice(Number(b.dataset.i),1);renderFiles()});el('run').disabled=false;setStatus(`${selectedFiles.length}件のPDFを選択中です。複数PDFは上から順に結合します。`)}
