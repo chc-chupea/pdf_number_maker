@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>ORPHIS印刷補助ツール Plus</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./pdf-lib.min.js"></script>
+<style>
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f7fb;margin:0;color:#172033}
+  .wrap{max-width:980px;margin:0 auto;padding:24px}
+  h1{font-size:26px;margin:0 0 8px}.lead{color:#536078;margin-bottom:18px;line-height:1.7}
+  .card{background:#fff;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 8px 28px rgba(20,35,70,.08)}
+  .drop{border:3px dashed #9eb1d8;border-radius:18px;padding:30px;text-align:center;background:#f9fbff;cursor:pointer;font-weight:800}
+  .drop.drag{background:#eaf2ff;border-color:#3367d6}.drop small{display:block;font-weight:500;color:#647088;margin-top:8px}
+  input,select,textarea,button{font:inherit}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  label{display:block;font-weight:800;margin-bottom:5px}.opt{display:flex;gap:8px;align-items:center;font-weight:700;margin:8px 0}.opt input{transform:scale(1.2)}
+  input[type="number"],input[type="text"],select,textarea{width:100%;box-sizing:border-box;border:1px solid #cfd7e6;border-radius:10px;padding:10px;background:#fff}
+  textarea{min-height:70px}.buttons{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:900;cursor:pointer}
+  .primary{background:#d71920;color:#fff}.secondary{background:#e9edf6;color:#22304d}.danger{background:#ffe8e8;color:#a40000}
+  .btn:disabled{opacity:.45;cursor:not-allowed}.files{display:none;border:1px solid #dfe5f1;border-radius:14px;overflow:hidden}.file-row{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid #edf1f7}.file-row:last-child{border-bottom:0}.file-row button{border:0;border-radius:8px;background:#edf1f7;padding:5px 8px}
+  .status{white-space:pre-wrap;background:#101827;color:#e8f0ff;border-radius:14px;padding:14px;line-height:1.7;min-height:72px}.downloads a{display:block;margin:8px 0;padding:10px 12px;background:#f1f5ff;border-radius:10px;color:#0b57d0;font-weight:800;text-decoration:none}
+  .note{font-size:13px;color:#5e6a80;line-height:1.7}.checkResult{background:#fff8e1;border-left:6px solid #f6b500;padding:12px;border-radius:10px;white-space:pre-wrap;line-height:1.7}.ok{background:#eaf8ee;border-left-color:#25a55b}.ng{background:#ffecec;border-left-color:#d71920}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ORPHIS印刷補助ツール Plus</h1>
+  <div class="lead">PDF結合・番号付与・白紙追加/削除・分割・回転・印刷ログをブラウザだけで処理します。</div>
+
+  <div class="card">
+    <div id="drop" class="drop">ここへPDFをドラッグ＆ドロップ<small>複数PDFをまとめて落とすと、自動で結合 → 番号付与します</small></div>
+    <input id="file" type="file" accept="application/pdf" multiple style="display:none">
+    <div id="files" class="files" style="margin-top:12px"></div>
+    <div class="buttons" style="margin-top:12px">
+      <button id="selectBtn" class="btn secondary">PDFを選ぶ</button>
+      <button id="clear" class="btn danger">選択をクリア</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>設定</h2>
+    <div class="grid">
+      <div><label>開始番号</label><input id="startNo" type="text" inputmode="numeric" value="1" placeholder="例：0001"></div>
+      <div><label>番号の桁数</label><select id="digits"><option value="0">自動（開始番号に合わせる）</option><option value="3">001</option><option value="4" selected>0001</option><option value="5">00001</option></select></div>
+      <div><label>番号フォントサイズ</label><input id="fontSize" type="number" min="5" max="40" value="5"></div>
+      <div><label>分割単位</label><select id="splitSize"><option value="0">分割しない</option><option value="100">100ページごと</option><option value="500">500ページごと</option></select></div>
+      <div><label>ページ回転</label><select id="rotate"><option value="0">回転しない</option><option value="90">右90°</option><option value="180">180°</option><option value="270">左90°</option></select></div>
+      <div><label>印刷部数メモ</label><input id="copies" type="text" placeholder="例：300部 / 予備10"></div>
+    </div>
+    <div class="grid" style="margin-top:10px">
+      <label class="opt"><input id="mergeMode" type="checkbox" checked> 複数PDFは結合してから番号付与</label>
+      <label class="opt"><input id="addPageNo" type="checkbox" checked> ページ番号を付ける</label>
+      <label class="opt"><input id="addHundred" type="checkbox" checked> 100ページごとに大きい目印</label>
+      <label class="opt"><input id="addDate" type="checkbox" checked> 左下に日時印字</label>
+      <label class="opt"><input id="addBlankOdd" type="checkbox"> 両面印刷用に奇数ページへ白紙追加</label>
+      <label class="opt"><input id="removeBlankLike" type="checkbox"> 白紙っぽいページを削除</label>
+    </div>
+    <div class="grid" style="margin-top:10px">
+      <div><label>削除ページ指定</label><input id="deletePages" type="text" placeholder="例：2,5,10-12"></div>
+      <div><label>担当・案件メモ</label><input id="jobMemo" type="text" placeholder="例：中央営業所 / 特報チラシ"></div>
+    </div>
+    <p class="note">設定は自動保存されます。次回このHTMLを開いたときも前回設定を復元します。</p>
+    <div class="buttons"><button id="run" class="btn primary" disabled>PDF作成</button><button id="resetSettings" class="btn secondary">設定初期化</button></div>
+  </div>
+
+  <div class="card"><h2>処理状況</h2><div id="status" class="status">PDFを選択してください。</div><div id="downloads" class="downloads"></div></div>
+
+  <div class="card">
+    <h2>印刷ログ</h2>
+    <div class="buttons" style="margin-bottom:10px">
+      <button id="exportAllLogs" class="btn secondary">ログをCSV出力</button>
+      <button id="clearLogs" class="btn danger">ログを消去</button>
+    </div>
+    <div id="logView" class="note">まだログはありません。</div>
+  </div>
+</div>
+
+<script>
+if(typeof PDFLib === 'undefined') alert('pdf-lib.min.jsを読み込めません。同じフォルダに pdf-lib.min.js を置いてください。');
+const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib || {};
+let selectedFiles=[];
+const el=id=>document.getElementById(id);
+const saveIds=['startNo','digits','fontSize','splitSize','rotate','copies','mergeMode','addPageNo','addHundred','addDate','addBlankOdd','removeBlankLike','deletePages','jobMemo'];
+function setStatus(m){el('status').textContent=m} function z(n){return String(n).padStart(2,'0')}
+function nowText(){const d=new Date();return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`}
+function baseName(n){return n.replace(/\.pdf$/i,'')} function csvSafe(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function padNumber(num,d,raw){const width=Number(d)===0?Math.max(1,String(raw||'').replace(/\D/g,'').length):Number(d);return String(num).padStart(width,'0')}
+function saveSettings(){const o={};saveIds.forEach(id=>{const e=el(id);o[id]=e.type==='checkbox'?e.checked:e.value});localStorage.setItem('orphisPdfPlusSettings_v2',JSON.stringify(o))}
+function loadSettings(){try{const o=JSON.parse(localStorage.getItem('orphisPdfPlusSettings_v2')||'{}');saveIds.forEach(id=>{if(o[id]===undefined)return;const e=el(id); if(e.type==='checkbox')e.checked=!!o[id]; else e.value=o[id]})}catch(e){}}
+saveIds.forEach(id=>el(id).addEventListener('input',saveSettings)); loadSettings();
+el('resetSettings').onclick=()=>{localStorage.removeItem('orphisPdfPlusSettings_v2');location.reload()}
+function renderFiles(){const box=el('files'); if(!selectedFiles.length){box.style.display='none';el('run').disabled=true;setStatus('PDFを選択してください。');return} box.style.display='block';box.innerHTML='';selectedFiles.forEach((f,i)=>{const row=document.createElement('div');row.className='file-row';row.innerHTML=`<div>${i+1}. ${f.name}（${(f.size/1024/1024).toFixed(2)}MB）</div><button data-i="${i}">削除</button>`;box.appendChild(row)});box.querySelectorAll('button').forEach(b=>b.onclick=()=>{selectedFiles.splice(Number(b.dataset.i),1);renderFiles()});el('run').disabled=false;setStatus(`${selectedFiles.length}件のPDFを選択中です。複数PDFは上から順に結合します。`)}
+function addFiles(files){const arr=[...files].filter(f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name)); if(!arr.length){alert('PDFファイルを選択してください。');return} selectedFiles.push(...arr);renderFiles()}
+el('selectBtn').onclick=()=>el('file').click(); el('file').onchange=e=>addFiles(e.target.files); el('clear').onclick=()=>{selectedFiles=[];el('file').value='';el('downloads').innerHTML='';renderFiles()};
+['dragenter','dragover'].forEach(ev=>el('drop').addEventListener(ev,e=>{e.preventDefault();el('drop').classList.add('drag')})); ['dragleave','drop'].forEach(ev=>el('drop').addEventListener(ev,e=>{e.preventDefault();el('drop').classList.remove('drag')})); el('drop').ondrop=e=>addFiles(e.dataTransfer.files);
+function parsePageRanges(text,max){const set=new Set();String(text||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(part=>{const m=part.match(/^(\d+)\s*-\s*(\d+)$/);if(m){let a=+m[1],b=+m[2];if(a>b)[a,b]=[b,a];for(let n=a;n<=b;n++)if(n>=1&&n<=max)set.add(n)}else{const n=+part;if(n>=1&&n<=max)set.add(n)}});return set}
+async function fileToPdf(file){return await PDFDocument.load(await file.arrayBuffer(),{ignoreEncryption:true})}
+function isProbablyBlank(page){const node=page.node; try{const c=node.Contents(); if(!c)return true; const s=String(c); return s.length<20}catch(e){return false}}
+async function buildPdf(){const opt=getOptions();const out=await PDFDocument.create();let copiedCount=0;for(const file of selectedFiles){setStatus(`読み込み中：${file.name}`);const src=await fileToPdf(file);const max=src.getPageCount();const del=parsePageRanges(opt.deletePages,max);const idx=[];for(let i=0;i<max;i++){if(del.has(i+1))continue; if(opt.removeBlankLike && isProbablyBlank(src.getPage(i)))continue; idx.push(i)}const pages=await out.copyPages(src,idx);pages.forEach(p=>{if(opt.rotate)p.setRotation(degrees((p.getRotation().angle+opt.rotate)%360));out.addPage(p)});copiedCount+=idx.length}await markPages(out,opt);let blankAdded=false;if(opt.addBlankOdd && out.getPageCount()%2===1){const last=out.getPages().at(-1);const {width,height}=last.getSize();out.addPage([width,height]);blankAdded=true}return {out,copiedCount,blankAdded,opt}}
+async function markPages(pdf,opt){const font=await pdf.embedFont(StandardFonts.Helvetica);const pages=pdf.getPages();pages.forEach((page,i)=>{const pageNo=opt.startNo+i;const {width,height}=page.getSize();if(opt.addPageNo){const t=padNumber(pageNo,opt.digits,opt.startNoRaw),size=opt.fontSize,tw=font.widthOfTextAtSize(t,size);page.drawText(t,{x:width-tw-14,y:10,size,font,color:rgb(.45,.48,.52)})}if(opt.addDate){page.drawText('PRINT '+nowText(),{x:14,y:10,size:Math.max(5,opt.fontSize),font,color:rgb(.60,.63,.68)})}if(opt.addHundred&&pageNo%100===0){const t=pageNo+'P',size=22,tw=font.widthOfTextAtSize(t,size);page.drawText(t,{x:width-tw-18,y:height-34,size,font,color:rgb(.86,.15,.22)})}})}
+function getOptions(){const raw=String(el('startNo').value||'1').replace(/\D/g,'')||'1';return {startNo:Math.max(1,parseInt(raw,10)),startNoRaw:raw,digits:+el('digits').value,fontSize:+el('fontSize').value,splitSize:+el('splitSize').value,rotate:+el('rotate').value,copies:el('copies').value,mergeMode:el('mergeMode').checked,addPageNo:el('addPageNo').checked,addHundred:el('addHundred').checked,addDate:el('addDate').checked,addBlankOdd:el('addBlankOdd').checked,removeBlankLike:el('removeBlankLike').checked,deletePages:el('deletePages').value,jobMemo:el('jobMemo').value.trim()}}
+function downloadBlob(bytes,name,type='application/pdf'){const blob=new Blob([bytes],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.textContent='ダウンロード：'+name;el('downloads').appendChild(a)}
+const LOG_KEY='orphisPdfPlusPrintLogs_v3';
+function safeFilePart(v){return String(v||'').trim().replace(/[\\/:*?"<>|]/g,'_').replace(/\s+/g,'_').slice(0,60)}
+function outputBaseName(files,opt,result){const memo=safeFilePart(opt.jobMemo);const range=`${padNumber(opt.startNo,opt.digits,opt.startNoRaw)}-${padNumber(result.lastNo,opt.digits,opt.startNoRaw)}`;if(memo)return `${memo}_${range}`;if(files.length===1)return `${safeFilePart(baseName(files[0].name))}_${range}`;return `merged_${range}`}
+function logHeaders(){return ['日時','担当・案件メモ','元ファイル','ファイル数','出力PDF名','印刷部数メモ','開始番号','最終番号','ページ数','分割単位','回転','奇数白紙追加','白紙削除','削除指定','結果']}
+function logRow(files,opt,result,outName){return {日時:nowText(),'担当・案件メモ':opt.jobMemo,'元ファイル':files.map(f=>f.name).join(' + '),'ファイル数':files.length,'出力PDF名':outName,'印刷部数メモ':opt.copies,'開始番号':padNumber(opt.startNo,opt.digits,opt.startNoRaw),'最終番号':padNumber(result.lastNo,opt.digits,opt.startNoRaw),'ページ数':result.pageCount,'分割単位':opt.splitSize,'回転':opt.rotate,'奇数白紙追加':opt.addBlankOdd?'ON':'OFF','白紙削除':opt.removeBlankLike?'ON':'OFF','削除指定':opt.deletePages,'結果':result.text}}
+function rowsToCsv(rows){const h=logHeaders();return h.map(csvSafe).join(',')+'\n'+rows.map(r=>h.map(k=>csvSafe(r[k])).join(',')).join('\n')+'\n'}
+function getLogs(){try{return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}catch(e){return []}}
+function saveLog(row){const logs=getLogs();logs.unshift(row);localStorage.setItem(LOG_KEY,JSON.stringify(logs.slice(0,300)));renderLogs()}
+function makeLog(files,opt,result,outName){return rowsToCsv([logRow(files,opt,result,outName)])}
+function renderLogs(){const logs=getLogs();const box=el('logView');if(!logs.length){box.textContent='まだログはありません。';return}box.innerHTML=logs.slice(0,10).map(r=>`<div style="padding:8px 0;border-bottom:1px solid #edf1f7"><b>${r['日時']}</b>　${r['担当・案件メモ']||'(案件メモなし)'}<br>出力：${r['出力PDF名']} / 番号：${r['開始番号']}〜${r['最終番号']} / ${r['ページ数']}ページ</div>`).join('')}
+el('exportAllLogs').onclick=()=>{const logs=getLogs();if(!logs.length){alert('出力するログがありません。');return}downloadBlob(new TextEncoder().encode(rowsToCsv(logs)),'print_logs_all.csv','text/csv')};
+el('clearLogs').onclick=()=>{if(confirm('印刷ログを消去しますか？')){localStorage.removeItem(LOG_KEY);renderLogs()}};
+renderLogs();
+el('run').onclick=async()=>{if(!selectedFiles.length)return;el('run').disabled=true;el('downloads').innerHTML='';try{setStatus('PDFを処理中です…');const {out,copiedCount,blankAdded,opt}=await buildPdf();const pageCount=out.getPageCount();const lastNo=opt.startNo+pageCount-1;const result={pageCount,lastNo,text:`作成完了 / 元コピー${copiedCount}ページ / 出力${pageCount}ページ${blankAdded?' / 白紙1ページ追加':''}`};const baseOut=outputBaseName(selectedFiles,opt,result);let outName=baseOut+'.pdf';if(opt.splitSize>0&&pageCount>opt.splitSize){const pages=out.getPages();const chunks=Math.ceil(pageCount/opt.splitSize);for(let c=0;c<chunks;c++){const part=await PDFDocument.create();const s=c*opt.splitSize,e=Math.min(s+opt.splitSize,pageCount);const copied=await part.copyPages(out,Array.from({length:e-s},(_,i)=>s+i));copied.forEach(p=>part.addPage(p));downloadBlob(await part.save(),`${baseOut}_part${c+1}_${String(s+1).padStart(4,'0')}-${String(e).padStart(4,'0')}.pdf`)}}else{downloadBlob(await out.save(),outName)}downloadBlob(new TextEncoder().encode(makeLog(selectedFiles,opt,result,outName)),'print_log.csv','text/csv');saveLog(logRow(selectedFiles,opt,result,outName));setStatus(`${result.text}\n番号範囲：${padNumber(opt.startNo,opt.digits,opt.startNoRaw)}〜${padNumber(lastNo,opt.digits,opt.startNoRaw)}\nログ保存：LocalStorageに保存しました。`)}catch(err){console.error(err);setStatus('エラーが出ました。PDFが保護されている、またはブラウザで処理できない形式の可能性があります。')}finally{el('run').disabled=false}}
+</script>
+</body>
+</html>
