@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>ORPHIS印刷補助ツール Plus</title>
+<title>ORPHIS印刷補助ツール Plus rev7</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./pdf-lib.min.js"></script>
 <style>
@@ -104,7 +104,18 @@ function addFiles(files){const arr=[...files].filter(f=>f.type==='application/pd
 el('selectBtn').onclick=()=>el('file').click(); el('file').onchange=e=>addFiles(e.target.files); el('clear').onclick=()=>{selectedFiles=[];el('file').value='';clearDownloads();renderFiles()};
 ['dragenter','dragover'].forEach(ev=>el('drop').addEventListener(ev,e=>{e.preventDefault();el('drop').classList.add('drag')})); ['dragleave','drop'].forEach(ev=>el('drop').addEventListener(ev,e=>{e.preventDefault();el('drop').classList.remove('drag')})); el('drop').ondrop=e=>addFiles(e.dataTransfer.files);
 function parsePageRanges(text,max){const set=new Set();String(text||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(part=>{const m=part.match(/^(\d+)\s*-\s*(\d+)$/);if(m){let a=+m[1],b=+m[2];if(a>b)[a,b]=[b,a];for(let n=a;n<=b;n++)if(n>=1&&n<=max)set.add(n)}else{const n=+part;if(n>=1&&n<=max)set.add(n)}});return set}
-async function fileToPdf(file){return await PDFDocument.load(await file.arrayBuffer(),{ignoreEncryption:true})}
+
+async function fileToPdf(file){
+  const bytes = await file.arrayBuffer();
+  const headText = new TextDecoder('latin1').decode(new Uint8Array(bytes).slice(0, Math.min(bytes.byteLength, 200000)));
+  if(headText.includes('/Encrypt')){
+    const err = new Error('PROTECTED_PDF');
+    err.userMessage = `「${file.name}」は保護PDFのため、このHTMLツールでは加工できない可能性が高いです。\n\nPDFに「暗号化・編集制限」が付いています。\n対処：Windowsの「Microsoft Print to PDF」等で一度PDFに印刷し直したPDFを使ってください。`;
+    throw err;
+  }
+  return await PDFDocument.load(bytes,{ignoreEncryption:true});
+}
+
 function isProbablyBlank(page){const node=page.node; try{const c=node.Contents(); if(!c)return true; const s=String(c); return s.length<20}catch(e){return false}}
 async function buildPdf(){const opt=getOptions();const out=await PDFDocument.create();let copiedCount=0;for(const file of selectedFiles){setStatus(`読み込み中：${file.name}`);const src=await fileToPdf(file);const max=src.getPageCount();const del=parsePageRanges(opt.deletePages,max);const idx=[];for(let i=0;i<max;i++){if(del.has(i+1))continue; if(opt.removeBlankLike && isProbablyBlank(src.getPage(i)))continue; idx.push(i)}const pages=await out.copyPages(src,idx);pages.forEach(p=>{if(opt.rotate)p.setRotation(degrees((p.getRotation().angle+opt.rotate)%360));out.addPage(p)});copiedCount+=idx.length}await markPages(out,opt);let blankAdded=false;if(opt.addBlankOdd && out.getPageCount()%2===1){const last=out.getPages().at(-1);const {width,height}=last.getSize();out.addPage([width,height]);blankAdded=true}return {out,copiedCount,blankAdded,opt}}
 async function markPages(pdf,opt){const font=await pdf.embedFont(StandardFonts.Helvetica);const pages=pdf.getPages();pages.forEach((page,i)=>{const pageNo=opt.startNo+i;const {width,height}=page.getSize();if(opt.addPageNo){const t=padNumber(pageNo,opt.digits,opt.startNoRaw),size=opt.fontSize,tw=font.widthOfTextAtSize(t,size);page.drawText(t,{x:width-tw-14,y:10,size,font,color:rgb(.45,.48,.52)})}if(opt.addDate){page.drawText('PRINT '+nowText(),{x:14,y:10,size:Math.max(5,opt.fontSize),font,color:rgb(.60,.63,.68)})}if(opt.addHundred&&pageNo%100===0){const t=pageNo+'P',size=22,tw=font.widthOfTextAtSize(t,size);page.drawText(t,{x:width-tw-18,y:height-34,size,font,color:rgb(.86,.15,.22)})}})}
@@ -127,7 +138,7 @@ function renderLogs(){const logs=getLogs().map(normalizeLog);const box=el('logVi
 el('exportAllLogs').onclick=()=>{const logs=getLogs().map(normalizeLog);if(!logs.length){alert('出力する履歴がありません。');return}downloadBlob(csvBytes(rowsToCsv(logs)),`pdf_kakou_rireki_${dateTimeStamp()}.csv`,'text/csv;charset=utf-8')};
 el('clearLogs').onclick=()=>{if(confirm('PDF加工履歴を消去しますか？')){localStorage.removeItem(LOG_KEY);renderLogs()}};
 renderLogs();
-el('run').onclick=async()=>{if(!selectedFiles.length)return;el('run').disabled=true;clearDownloads();try{setStatus('PDFを処理中です…');const {out,copiedCount,blankAdded,opt}=await buildPdf();const pageCount=out.getPageCount();const lastNo=opt.startNo+pageCount-1;const result={pageCount,lastNo,text:`作成完了 / 元コピー${copiedCount}ページ / 出力${pageCount}ページ${blankAdded?' / 白紙1ページ追加':''}`};const baseOut=outputBaseName(selectedFiles,opt,result);let outName=baseOut+'.pdf';if(opt.splitSize>0&&pageCount>opt.splitSize){const pages=out.getPages();const chunks=Math.ceil(pageCount/opt.splitSize);for(let c=0;c<chunks;c++){const part=await PDFDocument.create();const s=c*opt.splitSize,e=Math.min(s+opt.splitSize,pageCount);const copied=await part.copyPages(out,Array.from({length:e-s},(_,i)=>s+i));copied.forEach(p=>part.addPage(p));downloadBlob(await part.save(),`${baseOut}_part${c+1}_${String(s+1).padStart(4,'0')}-${String(e).padStart(4,'0')}.pdf`)}}else{downloadBlob(await out.save(),outName)}downloadBlob(csvBytes(makeLog(selectedFiles,opt,result,outName)),`pdf_kakou_rireki_${dateTimeStamp()}.csv`,'text/csv;charset=utf-8');saveLog(logRow(selectedFiles,opt,result,outName));setStatus(`${result.text}\n番号範囲：${padNumber(opt.startNo,opt.digits,opt.startNoRaw)}〜${padNumber(lastNo,opt.digits,opt.startNoRaw)}\nPDF加工履歴：LocalStorageに保存しました。`)}catch(err){console.error(err);setStatus('エラーが出ました。PDFが保護されている、またはブラウザで処理できない形式の可能性があります。')}finally{el('run').disabled=false}}
+el('run').onclick=async()=>{if(!selectedFiles.length)return;el('run').disabled=true;clearDownloads();try{setStatus('PDFを処理中です…');const {out,copiedCount,blankAdded,opt}=await buildPdf();const pageCount=out.getPageCount();const lastNo=opt.startNo+pageCount-1;const result={pageCount,lastNo,text:`作成完了 / 元コピー${copiedCount}ページ / 出力${pageCount}ページ${blankAdded?' / 白紙1ページ追加':''}`};const baseOut=outputBaseName(selectedFiles,opt,result);let outName=baseOut+'.pdf';if(opt.splitSize>0&&pageCount>opt.splitSize){const pages=out.getPages();const chunks=Math.ceil(pageCount/opt.splitSize);for(let c=0;c<chunks;c++){const part=await PDFDocument.create();const s=c*opt.splitSize,e=Math.min(s+opt.splitSize,pageCount);const copied=await part.copyPages(out,Array.from({length:e-s},(_,i)=>s+i));copied.forEach(p=>part.addPage(p));downloadBlob(await part.save(),`${baseOut}_part${c+1}_${String(s+1).padStart(4,'0')}-${String(e).padStart(4,'0')}.pdf`)}}else{downloadBlob(await out.save(),outName)}downloadBlob(csvBytes(makeLog(selectedFiles,opt,result,outName)),`pdf_kakou_rireki_${dateTimeStamp()}.csv`,'text/csv;charset=utf-8');saveLog(logRow(selectedFiles,opt,result,outName));setStatus(`${result.text}\n番号範囲：${padNumber(opt.startNo,opt.digits,opt.startNoRaw)}〜${padNumber(lastNo,opt.digits,opt.startNoRaw)}\nPDF加工履歴：LocalStorageに保存しました。`)}catch(err){console.error(err);setStatus(err.userMessage || ('エラーが出ました。PDFが保護されている、またはブラウザで処理できない形式の可能性があります。\n詳細：'+(err.message||err)))}finally{el('run').disabled=false}}
 </script>
 </body>
 </html>
