@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>ORPHIS印刷補助ツール Plus rev7</title>
+<title>ORPHIS印刷補助ツール Plus rev9</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./pdf-lib.min.js"></script>
 <style>
@@ -24,11 +24,11 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>ORPHIS印刷補助ツール Plus</h1>
-  <div class="lead">PDF結合・番号付与・白紙追加/削除・分割・回転・PDF加工履歴をブラウザだけで記録します。</div>
+  <h1>ORPHIS印刷補助ツール</h1>
+  <div class="lead">PDF結合・番号付与・白紙追加/削除・分割・回転/PDF加工履歴を記録します。</div>
 
   <div class="card">
-    <div id="drop" class="drop">ここへPDFをドラッグ＆ドロップ<small>複数PDFをまとめて落とすと、自動で結合 → 番号付与します</small></div>
+    <div id="drop" class="drop">ここへPDFをドラッグ＆ドロップ<small>複数PDFは、自動で結合 → 番号付与します</small></div>
     <input id="file" type="file" accept="application/pdf" multiple style="display:none">
     <div id="files" class="files" style="margin-top:12px"></div>
     <div class="buttons" style="margin-top:12px">
@@ -41,7 +41,7 @@
     <h2>設定</h2>
     <div class="grid">
       <div><label>開始番号</label><input id="startNo" type="text" inputmode="numeric" value="1" placeholder="例：0001"></div>
-      <div><label>番号の桁数</label><select id="digits"><option value="0">自動（開始番号に合わせる）</option><option value="3">001</option><option value="4" selected>0001</option><option value="5">00001</option></select></div>
+      <div><label>番号の桁数</label><select id="digits"><option value="0">自動（開始番号にあわせる）</option><option value="3">001</option><option value="4" selected>0001</option><option value="5">00001</option></select></div>
       <div><label>番号フォントサイズ</label><input id="fontSize" type="number" min="5" max="40" value="5"></div>
       <div><label>分割単位</label><select id="splitSize"><option value="0">分割しない</option><option value="100">100ページごと</option><option value="500">500ページごと</option></select></div>
       <div><label>ページ回転</label><select id="rotate"><option value="0">回転しない</option><option value="90">右90°</option><option value="180">180°</option><option value="270">左90°</option></select></div>
@@ -50,14 +50,14 @@
     <div class="grid" style="margin-top:10px">
       <label class="opt"><input id="mergeMode" type="checkbox" checked> 複数PDFは結合してから番号付与</label>
       <label class="opt"><input id="addPageNo" type="checkbox" checked> ページ番号を付ける</label>
-      <label class="opt"><input id="addHundred" type="checkbox" checked> 100ページごとに大きい目印</label>
+      <label class="opt"><input id="addHundred" type="checkbox" checked> 100ページごとに太字</label>
       <label class="opt"><input id="addDate" type="checkbox" checked> 左下に日時印字</label>
       <label class="opt"><input id="addBlankOdd" type="checkbox"> 両面印刷用に奇数ページへ白紙追加</label>
       <label class="opt"><input id="removeBlankLike" type="checkbox"> 白紙っぽいページを削除</label>
     </div>
     <div class="grid" style="margin-top:10px">
       <div><label>削除ページ指定</label><input id="deletePages" type="text" placeholder="例：2,5,10-12"></div>
-      <div><label>担当</label><input id="staff" type="text" placeholder="例：佐々木"></div>
+      <div><label>担当</label><input id="staff" type="text" placeholder="例：山田"></div>
       <div><label>案件</label><input id="project" type="text" placeholder="例：夏DM（ファイル名に反映）"></div>
       <div><label>メモ</label><input id="jobMemo" type="text" placeholder="例：ORPHIS"></div>
     </div>
@@ -94,7 +94,7 @@ function padNumber(num,d,raw){const width=Number(d)===0?Math.max(1,String(raw||'
 function saveSettings(){const o={};saveIds.forEach(id=>{const e=el(id);o[id]=e.type==='checkbox'?e.checked:e.value});localStorage.setItem('orphisPdfPlusSettings_v2',JSON.stringify(o))}
 function loadSettings(){try{const o=JSON.parse(localStorage.getItem('orphisPdfPlusSettings_v2')||'{}');
   // 旧版で例文が実値として保存されていた場合は空欄に戻す
-  const sampleValues={copies:['300部＋予備10部','300部 / 予備10'],staff:['佐々木'],project:['特報チラシ'],jobMemo:['300部 / ORPHIS①号機']};
+  const sampleValues={copies:['300部＋予備10部','300部 / 予備10'],staff:['山田'],project:['特報チラシ'],jobMemo:['300部 / ORPHIS']};
   saveIds.forEach(id=>{if(o[id]===undefined)return;const e=el(id); if(e.type==='checkbox'){e.checked=!!o[id]}else{let v=o[id]; if(sampleValues[id]&&sampleValues[id].includes(v))v=''; e.value=v}})
 }catch(e){}}
 saveIds.forEach(id=>el(id).addEventListener('input',saveSettings)); loadSettings();
@@ -118,7 +118,24 @@ async function fileToPdf(file){
 
 function isProbablyBlank(page){const node=page.node; try{const c=node.Contents(); if(!c)return true; const s=String(c); return s.length<20}catch(e){return false}}
 async function buildPdf(){const opt=getOptions();const out=await PDFDocument.create();let copiedCount=0;for(const file of selectedFiles){setStatus(`読み込み中：${file.name}`);const src=await fileToPdf(file);const max=src.getPageCount();const del=parsePageRanges(opt.deletePages,max);const idx=[];for(let i=0;i<max;i++){if(del.has(i+1))continue; if(opt.removeBlankLike && isProbablyBlank(src.getPage(i)))continue; idx.push(i)}const pages=await out.copyPages(src,idx);pages.forEach(p=>{if(opt.rotate)p.setRotation(degrees((p.getRotation().angle+opt.rotate)%360));out.addPage(p)});copiedCount+=idx.length}await markPages(out,opt);let blankAdded=false;if(opt.addBlankOdd && out.getPageCount()%2===1){const last=out.getPages().at(-1);const {width,height}=last.getSize();out.addPage([width,height]);blankAdded=true}return {out,copiedCount,blankAdded,opt}}
-async function markPages(pdf,opt){const font=await pdf.embedFont(StandardFonts.Helvetica);const pages=pdf.getPages();pages.forEach((page,i)=>{const pageNo=opt.startNo+i;const {width,height}=page.getSize();if(opt.addPageNo){const t=padNumber(pageNo,opt.digits,opt.startNoRaw),size=opt.fontSize,tw=font.widthOfTextAtSize(t,size);page.drawText(t,{x:width-tw-14,y:10,size,font,color:rgb(.45,.48,.52)})}if(opt.addDate){page.drawText('PRINT '+nowText(),{x:14,y:10,size:Math.max(5,opt.fontSize),font,color:rgb(.60,.63,.68)})}if(opt.addHundred&&pageNo%100===0){const t=pageNo+'P',size=22,tw=font.widthOfTextAtSize(t,size);page.drawText(t,{x:width-tw-18,y:height-34,size,font,color:rgb(.86,.15,.22)})}})}
+async function markPages(pdf,opt){
+  const font=await pdf.embedFont(StandardFonts.Helvetica);
+  const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
+  const pages=pdf.getPages();
+  pages.forEach((page,i)=>{
+    const pageNo=opt.startNo+i;
+    const {width,height}=page.getSize();
+    if(opt.addPageNo){
+      const t=padNumber(pageNo,opt.digits,opt.startNoRaw),size=opt.fontSize;
+      const numberFont=(opt.addHundred && pageNo % 100 === 0) ? bold : font;
+      const tw=numberFont.widthOfTextAtSize(t,size);
+      page.drawText(t,{x:width-tw-14,y:10,size,font:numberFont,color:rgb(.45,.48,.52)})
+    }
+    if(opt.addDate){
+      page.drawText('PRINT '+nowText(),{x:14,y:10,size:Math.max(5,opt.fontSize),font,color:rgb(.60,.63,.68)})
+    }
+  })
+}
 function getOptions(){const raw=String(el('startNo').value||'1').replace(/\D/g,'')||'1';return {startNo:Math.max(1,parseInt(raw,10)),startNoRaw:raw,digits:+el('digits').value,fontSize:+el('fontSize').value,splitSize:+el('splitSize').value,rotate:+el('rotate').value,copies:el('copies').value,mergeMode:el('mergeMode').checked,addPageNo:el('addPageNo').checked,addHundred:el('addHundred').checked,addDate:el('addDate').checked,addBlankOdd:el('addBlankOdd').checked,removeBlankLike:el('removeBlankLike').checked,deletePages:el('deletePages').value,staff:el('staff').value.trim(),project:el('project').value.trim(),jobMemo:el('jobMemo').value.trim()}}
 function clearDownloads(){el('downloads').innerHTML='<div class="download-empty">ダウンロード可能ファイルはまだありません。</div>'}
 function downloadBlob(bytes,name,type='application/pdf'){const box=el('downloads');const empty=box.querySelector('.download-empty');if(empty)empty.remove();const blob=new Blob([bytes],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.textContent='ダウンロード可能ファイル：'+name;box.appendChild(a)}
