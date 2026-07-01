@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>ORPHIS印刷補助ツール Plus rev9</title>
+<title>CHC PDF加工ツール Ver.1.1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./pdf-lib.min.js"></script>
 <style>
@@ -20,20 +20,31 @@
   .btn:disabled{opacity:.45;cursor:not-allowed}.files{display:none;border:1px solid #dfe5f1;border-radius:14px;overflow:hidden}.file-row{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid #edf1f7}.file-row:last-child{border-bottom:0}.file-row button{border:0;border-radius:8px;background:#edf1f7;padding:5px 8px}
   .status{white-space:pre-wrap;background:#101827;color:#e8f0ff;border-radius:14px;padding:14px;line-height:1.7;min-height:72px}.downloads{min-height:52px}.downloads a{display:block;margin:8px 0;padding:10px 12px;background:#f1f5ff;border-radius:10px;color:#0b57d0;font-weight:800;text-decoration:none}.download-empty{color:#5e6a80;background:#f7f9fc;border:1px dashed #cfd7e6;border-radius:10px;padding:12px}.logTable{width:100%;border-collapse:collapse;font-size:13px}.logTable th,.logTable td{border-bottom:1px solid #edf1f7;padding:8px;text-align:left;vertical-align:top}.logTable th{background:#f7f9fc;font-weight:900}.logTable td{word-break:break-word}
   .note{font-size:13px;color:#5e6a80;line-height:1.7}.checkResult{background:#fff8e1;border-left:6px solid #f6b500;padding:12px;border-radius:10px;white-space:pre-wrap;line-height:1.7}.ok{background:#eaf8ee;border-left-color:#25a55b}.ng{background:#ffecec;border-left-color:#d71920}
+
+  .infoBox{background:#f7f9fc;border:1px solid #dfe5f1;border-radius:12px;padding:12px;margin-top:12px;line-height:1.7;color:#35415f}
+  .previewGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px}
+  .previewBox{border:1px solid #dfe5f1;border-radius:14px;background:#f7f9fc;padding:10px;min-height:210px}
+  .previewBox h3{font-size:15px;margin:0 0 8px}.previewFrame{width:100%;height:260px;border:0;border-radius:10px;background:#fff}.previewEmpty{color:#6c7589;padding:18px;text-align:center}.miniPreviewGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.miniPreviewItem{background:#fff;border:1px solid #dfe5f1;border-radius:10px;padding:8px}.miniPreviewItem iframe{width:100%;height:170px;border:0;background:#fff}.miniPreviewName{font-size:12px;font-weight:800;margin-top:6px;word-break:break-word;color:#12265a}.miniPreviewNote{font-size:12px;color:#6c7589;margin-top:8px}
+  .folderStatus{font-size:13px;color:#536078;margin-left:4px;align-self:center}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>ORPHIS印刷補助ツール</h1>
-  <div class="lead">PDF結合・番号付与・白紙追加/削除・分割・回転/PDF加工履歴を記録します。</div>
+  <h1>PDF加工ツール</h1>
+  <div class="lead">PDF結合・番号付与・白紙追加/削除・分割・回転/PDF加工履歴を記録します。加工前に、ナンバリング後のイメージも確認できます。</div>
 
   <div class="card">
-    <div id="drop" class="drop">ここへPDFをドラッグ＆ドロップ<small>複数PDFは、自動で結合 → 番号付与します</small></div>
+    <div id="drop" class="drop">ここへPDFをドラッグ＆ドロップ<small>複数PDFを自動で結合 → 番号付与します</small></div>
     <input id="file" type="file" accept="application/pdf" multiple style="display:none">
     <div id="files" class="files" style="margin-top:12px"></div>
     <div class="buttons" style="margin-top:12px">
       <button id="selectBtn" class="btn secondary">PDFを選ぶ</button>
       <button id="clear" class="btn danger">選択をクリア</button>
+    </div>
+    <div id="pageInfo" class="infoBox">ドラッグした瞬間に、PDFの総ページ数をここへ表示します。</div>
+    <div class="previewGrid">
+      <div class="previewBox"><h3>アップロードファイルプレビュー</h3><div id="beforePreview" class="previewEmpty">PDFを選択すると先頭PDFを表示します。</div></div>
+      <div class="previewBox"><h3>加工後イメージ</h3><div id="afterPreview" class="previewEmpty">PDFを選択すると、加工前にイメージ表示します。</div><button id="refreshAfterPreview" class="btn secondary" style="margin-top:8px">加工後イメージを更新</button></div>
     </div>
   </div>
 
@@ -41,7 +52,7 @@
     <h2>設定</h2>
     <div class="grid">
       <div><label>開始番号</label><input id="startNo" type="text" inputmode="numeric" value="1" placeholder="例：0001"></div>
-      <div><label>番号の桁数</label><select id="digits"><option value="0">自動（開始番号にあわせる）</option><option value="3">001</option><option value="4" selected>0001</option><option value="5">00001</option></select></div>
+      <div><label>番号の桁数</label><select id="digits"><option value="0">自動（開始番号に合わせる）</option><option value="3">001</option><option value="4" selected>0001</option><option value="5">00001</option></select></div>
       <div><label>番号フォントサイズ</label><input id="fontSize" type="number" min="5" max="40" value="5"></div>
       <div><label>分割単位</label><select id="splitSize"><option value="0">分割しない</option><option value="100">100ページごと</option><option value="500">500ページごと</option></select></div>
       <div><label>ページ回転</label><select id="rotate"><option value="0">回転しない</option><option value="90">右90°</option><option value="180">180°</option><option value="270">左90°</option></select></div>
@@ -50,14 +61,14 @@
     <div class="grid" style="margin-top:10px">
       <label class="opt"><input id="mergeMode" type="checkbox" checked> 複数PDFは結合してから番号付与</label>
       <label class="opt"><input id="addPageNo" type="checkbox" checked> ページ番号を付ける</label>
-      <label class="opt"><input id="addHundred" type="checkbox" checked> 100ページごとに太字</label>
+      <label class="opt"><input id="addHundred" type="checkbox" checked> 100ページごとに通し番号を太字にする</label>
       <label class="opt"><input id="addDate" type="checkbox" checked> 左下に日時印字</label>
       <label class="opt"><input id="addBlankOdd" type="checkbox"> 両面印刷用に奇数ページへ白紙追加</label>
       <label class="opt"><input id="removeBlankLike" type="checkbox"> 白紙っぽいページを削除</label>
     </div>
     <div class="grid" style="margin-top:10px">
       <div><label>削除ページ指定</label><input id="deletePages" type="text" placeholder="例：2,5,10-12"></div>
-      <div><label>担当</label><input id="staff" type="text" placeholder="例：山田"></div>
+      <div><label>担当</label><input id="staff" type="text" placeholder="例：佐々木"></div>
       <div><label>案件</label><input id="project" type="text" placeholder="例：夏DM（ファイル名に反映）"></div>
       <div><label>メモ</label><input id="jobMemo" type="text" placeholder="例：ORPHIS"></div>
     </div>
@@ -65,7 +76,15 @@
     <div class="buttons"><button id="run" class="btn primary" disabled>PDF作成</button><button id="resetSettings" class="btn secondary">設定初期化</button></div>
   </div>
 
-  <div class="card"><h2>ダウンロード</h2><div id="downloads" class="downloads"><div class="download-empty">ダウンロード可能ファイルはまだありません。</div></div></div>
+  <div class="card">
+    <h2>ダウンロード</h2>
+    <div class="buttons" style="margin-bottom:10px">
+      <button id="chooseFolder" class="btn secondary">保存フォルダを選ぶ（対応ブラウザのみ）</button>
+      <button id="forgetFolder" class="btn secondary">保存フォルダ記憶を解除</button>
+      <span id="folderStatus" class="folderStatus">保存フォルダ：未設定</span>
+    </div>
+    <div id="downloads" class="downloads"><div class="download-empty">ダウンロード可能ファイルはまだありません。</div></div>
+  </div>
 
   <div class="card"><h2>処理状況</h2><div id="status" class="status">PDFを選択してください。</div></div>
 
@@ -83,6 +102,10 @@
 if(typeof PDFLib === 'undefined') alert('pdf-lib.min.jsを読み込めません。同じフォルダに pdf-lib.min.js を置いてください。');
 const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib || {};
 let selectedFiles=[];
+let selectedMeta=[];
+let beforePreviewUrls=[];
+let afterPreviewUrl=null;
+let afterPreviewTimer=null;
 const el=id=>document.getElementById(id);
 const saveIds=['startNo','digits','fontSize','splitSize','rotate','copies','mergeMode','addPageNo','addHundred','addDate','addBlankOdd','removeBlankLike','deletePages','staff','project','jobMemo'];
 function setStatus(m){el('status').textContent=m} function z(n){return String(n).padStart(2,'0')}
@@ -91,17 +114,124 @@ function dateStamp(){const d=new Date();return `${d.getFullYear()}${z(d.getMonth
 function dateTimeStamp(){const d=new Date();return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`}
 function baseName(n){return n.replace(/\.pdf$/i,'')} function csvSafe(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
 function padNumber(num,d,raw){const width=Number(d)===0?Math.max(1,String(raw||'').replace(/\D/g,'').length):Number(d);return String(num).padStart(width,'0')}
+function setPageInfo(text){el('pageInfo').textContent=text}
+function setPreview(id,url,empty){const box=el(id); if(!url){box.className='previewEmpty';box.innerHTML=empty;return} box.className=''; box.innerHTML=`<iframe class="previewFrame" src="${url}#page=1&view=FitH"></iframe>`}
+function revokeBeforePreviews(){beforePreviewUrls.forEach(u=>{try{URL.revokeObjectURL(u)}catch(e){}});beforePreviewUrls=[]}
+function renderBeforePreview(){
+  revokeBeforePreviews();
+  const box=el('beforePreview');
+  if(!selectedFiles.length){setPreview('beforePreview',null,'PDFを選択するとアップロードファイルを表示します。');return}
+  box.className='';
+  const showFiles=selectedFiles.slice(0,6);
+  const html=['<div class="miniPreviewGrid">'];
+  showFiles.forEach((f,i)=>{
+    const url=URL.createObjectURL(f);
+    beforePreviewUrls.push(url);
+    html.push(`<div class="miniPreviewItem"><iframe src="${url}#page=1&view=FitH"></iframe><div class="miniPreviewName">${i+1}. ${escapeHtml(f.name)}</div></div>`);
+  });
+  html.push('</div>');
+  if(selectedFiles.length>6) html.push(`<div class="miniPreviewNote">※ ${selectedFiles.length}件中、先頭6件を表示しています。</div>`);
+  box.innerHTML=html.join('');
+}
+function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function clearAfterPreview(message='PDFを選択すると、加工前にイメージ表示します。'){if(afterPreviewUrl){try{URL.revokeObjectURL(afterPreviewUrl)}catch(e){} afterPreviewUrl=null;} setPreview('afterPreview',null,message)}
+function scheduleAfterPreview(){clearTimeout(afterPreviewTimer); afterPreviewTimer=setTimeout(()=>renderAfterPreview().catch(err=>{console.warn(err); clearAfterPreview('加工後イメージを作成できませんでした。保護PDFなどの可能性があります。');}),450)}
+async function analyzeSelectedPdfs(){
+  selectedMeta=[];
+  if(!selectedFiles.length){setPageInfo('ドラッグしたPDFの総ページ数をここへ表示します。');return}
+  let total=0, lines=[];
+  for(const f of selectedFiles){
+    try{const pdf=await fileToPdf(f); const pages=pdf.getPageCount(); selectedMeta.push({name:f.name,pages,ok:true}); total+=pages; lines.push(`${f.name}：${pages}ページ`)}
+    catch(err){selectedMeta.push({name:f.name,pages:0,ok:false,error:err.userMessage||err.message}); lines.push(`${f.name}：ページ数を取得できません（保護PDF等）`)}
+  }
+  setPageInfo(`選択PDF：${selectedFiles.length}件 / 総ページ数：${total}ページ\n`+lines.join('\n'));
+  scheduleAfterPreview();
+}
+async function getPageByGlobalNumber(globalNo){
+  let acc=0;
+  for(let i=0;i<selectedFiles.length;i++){
+    const src=await fileToPdf(selectedFiles[i]);
+    const count=src.getPageCount();
+    if(globalNo<=acc+count){return {src,pageIndex:globalNo-acc-1};}
+    acc+=count;
+  }
+  return null;
+}
+async function drawPageMark(page,pageNo,opt,font,bold){
+  const {width}=page.getSize();
+  if(opt.addPageNo){
+    const t=padNumber(pageNo,opt.digits,opt.startNoRaw),size=opt.fontSize;
+    const numberFont=(opt.addHundred && pageNo % 100 === 0) ? bold : font;
+    const tw=numberFont.widthOfTextAtSize(t,size);
+    page.drawText(t,{x:width-tw-14,y:10,size,font:numberFont,color:rgb(.45,.48,.52)});
+  }
+  if(opt.addDate){page.drawText('PRINT '+nowText(),{x:14,y:10,size:Math.max(5,opt.fontSize),font,color:rgb(.60,.63,.68)});}
+}
+async function renderAfterPreview(){
+  if(!selectedFiles.length){clearAfterPreview();return}
+  const total=selectedMeta.reduce((a,m)=>a+(m.pages||0),0);
+  if(!total){clearAfterPreview('ページ数を取得できないため、加工後イメージを表示できません。');return}
+  setPreview('afterPreview',null,'加工後イメージを作成中です…');
+  const opt=getOptions();
+  const preview=await PDFDocument.create();
+  const sampleGlobals=[];
+  sampleGlobals.push(1);
+  if(total>=100) sampleGlobals.push(100);
+  if(total>1 && !sampleGlobals.includes(total)) sampleGlobals.push(total);
+  for(const g of sampleGlobals){
+    const found=await getPageByGlobalNumber(g);
+    if(!found) continue;
+    const [p]=await preview.copyPages(found.src,[found.pageIndex]);
+    if(opt.rotate)p.setRotation(degrees((p.getRotation().angle+opt.rotate)%360));
+    preview.addPage(p);
+  }
+  const font=await preview.embedFont(StandardFonts.Helvetica);
+  const bold=await preview.embedFont(StandardFonts.HelveticaBold);
+  preview.getPages().forEach((p,i)=>drawPageMark(p,opt.startNo+sampleGlobals[i]-1,opt,font,bold));
+  const bytes=await preview.save();
+  if(afterPreviewUrl){try{URL.revokeObjectURL(afterPreviewUrl)}catch(e){}}
+  afterPreviewUrl=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+  setPreview('afterPreview',afterPreviewUrl);
+}
+
+function confirmBeforeRun(opt){
+  const total=selectedMeta.reduce((a,m)=>a+(m.pages||0),0);
+  const fileNames=selectedFiles.map(f=>f.name).join('、');
+  const msg=[
+    'この設定でPDF加工を実行します。',
+    '',
+    `PDF：${selectedFiles.length}件`,
+    `元PDF：${fileNames}`,
+    `総ページ数：${total||'未取得'}ページ`,
+    `開始番号：${opt.startNoRaw}`,
+    `桁数：${opt.digits===0?'自動（開始番号に合わせる）':opt.digits+'桁'}`,
+    `番号フォントサイズ：${opt.fontSize}pt`,
+    `100ページごと太字：${opt.addHundred?'ON':'OFF'}`,
+    `結合：${opt.mergeMode?'ON':'OFF'}`,
+    `分割：${opt.splitSize?opt.splitSize+'ページごと':'なし'}`,
+    `回転：${opt.rotate?opt.rotate+'°':'なし'}`,
+    `奇数ページ白紙追加：${opt.addBlankOdd?'ON':'OFF'}`,
+    `白紙削除：${opt.removeBlankLike?'ON':'OFF'}`,
+    `担当：${opt.staff||'未入力'}`,
+    `案件：${opt.project||'未入力（単一PDFは元PDF名、複数PDFは結合PDF(件数)を使用）'}`,
+    '',
+    '実行してよろしいですか？'
+  ].join('\n');
+  return confirm(msg);
+}
+
 function saveSettings(){const o={};saveIds.forEach(id=>{const e=el(id);o[id]=e.type==='checkbox'?e.checked:e.value});localStorage.setItem('orphisPdfPlusSettings_v2',JSON.stringify(o))}
 function loadSettings(){try{const o=JSON.parse(localStorage.getItem('orphisPdfPlusSettings_v2')||'{}');
   // 旧版で例文が実値として保存されていた場合は空欄に戻す
-  const sampleValues={copies:['300部＋予備10部','300部 / 予備10'],staff:['山田'],project:['特報チラシ'],jobMemo:['300部 / ORPHIS']};
+  const sampleValues={copies:['300部＋予備10部','300部 / 予備10'],staff:['佐々木'],project:['特報チラシ'],jobMemo:['300部 / ORPHIS']};
   saveIds.forEach(id=>{if(o[id]===undefined)return;const e=el(id); if(e.type==='checkbox'){e.checked=!!o[id]}else{let v=o[id]; if(sampleValues[id]&&sampleValues[id].includes(v))v=''; e.value=v}})
 }catch(e){}}
-saveIds.forEach(id=>el(id).addEventListener('input',saveSettings)); loadSettings();
+saveIds.forEach(id=>el(id).addEventListener('input',()=>{saveSettings();scheduleAfterPreview();})); loadSettings();
 el('resetSettings').onclick=()=>{localStorage.removeItem('orphisPdfPlusSettings_v2');location.reload()}
-function renderFiles(){const box=el('files'); if(!selectedFiles.length){box.style.display='none';el('run').disabled=true;setStatus('PDFを選択してください。');return} box.style.display='block';box.innerHTML='';selectedFiles.forEach((f,i)=>{const row=document.createElement('div');row.className='file-row';row.innerHTML=`<div>${i+1}. ${f.name}（${(f.size/1024/1024).toFixed(2)}MB）</div><button data-i="${i}">削除</button>`;box.appendChild(row)});box.querySelectorAll('button').forEach(b=>b.onclick=()=>{selectedFiles.splice(Number(b.dataset.i),1);renderFiles()});el('run').disabled=false;setStatus(`${selectedFiles.length}件のPDFを選択中です。複数PDFは上から順に結合します。`)}
+function renderFiles(){const box=el('files'); if(!selectedFiles.length){box.style.display='none';el('run').disabled=true;setStatus('PDFを選択してください。');setPageInfo('ドラッグしたPDFの総ページ数をここへ表示します。');setPreview('beforePreview',null,'PDFを選択するとアップロードファイルを表示します。');clearAfterPreview();return} box.style.display='block';box.innerHTML='';selectedFiles.forEach((f,i)=>{const row=document.createElement('div');row.className='file-row';row.innerHTML=`<div>${i+1}. ${f.name}（${(f.size/1024/1024).toFixed(2)}MB）</div><button data-i="${i}">削除</button>`;box.appendChild(row)});box.querySelectorAll('button').forEach(b=>b.onclick=()=>{selectedFiles.splice(Number(b.dataset.i),1);renderFiles();analyzeSelectedPdfs()});el('run').disabled=false;setStatus(`${selectedFiles.length}件のPDFを選択中です。複数PDFは上から順に結合します。`);renderBeforePreview();analyzeSelectedPdfs()}
 function addFiles(files){const arr=[...files].filter(f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name)); if(!arr.length){alert('PDFファイルを選択してください。');return} selectedFiles.push(...arr);renderFiles()}
-el('selectBtn').onclick=()=>el('file').click(); el('file').onchange=e=>addFiles(e.target.files); el('clear').onclick=()=>{selectedFiles=[];el('file').value='';clearDownloads();renderFiles()};
+el('selectBtn').onclick=()=>el('file').click(); el('file').onchange=e=>{addFiles(e.target.files); e.target.value='';}; el('clear').onclick=()=>{selectedFiles=[];el('file').value='';revokeBeforePreviews();clearDownloads();renderFiles()};
+el('refreshAfterPreview').onclick=()=>renderAfterPreview();
 ['dragenter','dragover'].forEach(ev=>el('drop').addEventListener(ev,e=>{e.preventDefault();el('drop').classList.add('drag')})); ['dragleave','drop'].forEach(ev=>el('drop').addEventListener(ev,e=>{e.preventDefault();el('drop').classList.remove('drag')})); el('drop').ondrop=e=>addFiles(e.dataTransfer.files);
 function parsePageRanges(text,max){const set=new Set();String(text||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(part=>{const m=part.match(/^(\d+)\s*-\s*(\d+)$/);if(m){let a=+m[1],b=+m[2];if(a>b)[a,b]=[b,a];for(let n=a;n<=b;n++)if(n>=1&&n<=max)set.add(n)}else{const n=+part;if(n>=1&&n<=max)set.add(n)}});return set}
 
@@ -122,23 +252,24 @@ async function markPages(pdf,opt){
   const font=await pdf.embedFont(StandardFonts.Helvetica);
   const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
   const pages=pdf.getPages();
-  pages.forEach((page,i)=>{
-    const pageNo=opt.startNo+i;
-    const {width,height}=page.getSize();
-    if(opt.addPageNo){
-      const t=padNumber(pageNo,opt.digits,opt.startNoRaw),size=opt.fontSize;
-      const numberFont=(opt.addHundred && pageNo % 100 === 0) ? bold : font;
-      const tw=numberFont.widthOfTextAtSize(t,size);
-      page.drawText(t,{x:width-tw-14,y:10,size,font:numberFont,color:rgb(.45,.48,.52)})
-    }
-    if(opt.addDate){
-      page.drawText('PRINT '+nowText(),{x:14,y:10,size:Math.max(5,opt.fontSize),font,color:rgb(.60,.63,.68)})
-    }
-  })
+  pages.forEach((page,i)=>drawPageMark(page,opt.startNo+i,opt,font,bold));
 }
 function getOptions(){const raw=String(el('startNo').value||'1').replace(/\D/g,'')||'1';return {startNo:Math.max(1,parseInt(raw,10)),startNoRaw:raw,digits:+el('digits').value,fontSize:+el('fontSize').value,splitSize:+el('splitSize').value,rotate:+el('rotate').value,copies:el('copies').value,mergeMode:el('mergeMode').checked,addPageNo:el('addPageNo').checked,addHundred:el('addHundred').checked,addDate:el('addDate').checked,addBlankOdd:el('addBlankOdd').checked,removeBlankLike:el('removeBlankLike').checked,deletePages:el('deletePages').value,staff:el('staff').value.trim(),project:el('project').value.trim(),jobMemo:el('jobMemo').value.trim()}}
+
+const DB_NAME='orphisPdfPlusFolderDB_v1';
+function openFolderDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>req.result.createObjectStore('handles');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function saveDirHandle(handle){const db=await openFolderDb();return new Promise((resolve,reject)=>{const tx=db.transaction('handles','readwrite');tx.objectStore('handles').put(handle,'dir');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
+async function getDirHandle(){try{const db=await openFolderDb();return await new Promise((resolve,reject)=>{const tx=db.transaction('handles','readonly');const req=tx.objectStore('handles').get('dir');req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error)})}catch(e){return null}}
+async function clearDirHandle(){try{const db=await openFolderDb();await new Promise((resolve,reject)=>{const tx=db.transaction('handles','readwrite');tx.objectStore('handles').delete('dir');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}catch(e){}}
+async function verifyPermission(handle,write=false){if(!handle)return false;const opts={mode:write?'readwrite':'read'}; if((await handle.queryPermission(opts))==='granted')return true; if((await handle.requestPermission(opts))==='granted')return true; return false}
+async function refreshFolderStatus(){const fs=el('folderStatus'); if(!('showDirectoryPicker' in window)){fs.textContent='保存フォルダ：このブラウザでは自動保存非対応（リンクから保存してください）';return} const h=await getDirHandle(); fs.textContent=h?`保存フォルダ：${h.name}（記憶中）`:'保存フォルダ：未設定'}
+async function writeToSavedFolder(name,bytes,type){const h=await getDirHandle(); if(!h)return; try{const ok=await verifyPermission(h,true); if(!ok)return; const fh=await h.getFileHandle(name,{create:true}); const w=await fh.createWritable(); await w.write(new Blob([bytes],{type})); await w.close(); const fs=el('folderStatus'); fs.textContent=`保存フォルダ：${h.name} に保存しました`; }catch(e){console.warn('folder save failed',e); const fs=el('folderStatus'); fs.textContent='保存フォルダ：自動保存できませんでした（ダウンロードリンクを使用してください）';}}
+el('chooseFolder').onclick=async()=>{if(!('showDirectoryPicker' in window)){alert('このブラウザでは保存フォルダ記憶に対応していません。Edge/Chromeでお試しください。');return} try{const h=await window.showDirectoryPicker(); await saveDirHandle(h); await refreshFolderStatus();}catch(e){}}
+el('forgetFolder').onclick=async()=>{await clearDirHandle(); await refreshFolderStatus()};
+refreshFolderStatus();
 function clearDownloads(){el('downloads').innerHTML='<div class="download-empty">ダウンロード可能ファイルはまだありません。</div>'}
-function downloadBlob(bytes,name,type='application/pdf'){const box=el('downloads');const empty=box.querySelector('.download-empty');if(empty)empty.remove();const blob=new Blob([bytes],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.textContent='ダウンロード可能ファイル：'+name;box.appendChild(a)}
+
+function downloadBlob(bytes,name,type='application/pdf'){const box=el('downloads');const empty=box.querySelector('.download-empty');if(empty)empty.remove();const blob=new Blob([bytes],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.textContent='ダウンロード可能ファイル：'+name;box.appendChild(a);writeToSavedFolder(name,bytes,type); if(type==='application/pdf'){setPreview('afterPreview',url)}}
 function csvBytes(text){return new Uint8Array([0xEF,0xBB,0xBF,...new TextEncoder().encode(text)])}
 const LOG_KEY='orphisPdfPlusPrintLogs_v3';
 function safeFilePart(v){return String(v||'').trim().replace(/[\\/:*?"<>|]/g,'_').replace(/\s+/g,'_').slice(0,60)}
@@ -155,7 +286,7 @@ function renderLogs(){const logs=getLogs().map(normalizeLog);const box=el('logVi
 el('exportAllLogs').onclick=()=>{const logs=getLogs().map(normalizeLog);if(!logs.length){alert('出力する履歴がありません。');return}downloadBlob(csvBytes(rowsToCsv(logs)),`pdf_kakou_rireki_${dateTimeStamp()}.csv`,'text/csv;charset=utf-8')};
 el('clearLogs').onclick=()=>{if(confirm('PDF加工履歴を消去しますか？')){localStorage.removeItem(LOG_KEY);renderLogs()}};
 renderLogs();
-el('run').onclick=async()=>{if(!selectedFiles.length)return;el('run').disabled=true;clearDownloads();try{setStatus('PDFを処理中です…');const {out,copiedCount,blankAdded,opt}=await buildPdf();const pageCount=out.getPageCount();const lastNo=opt.startNo+pageCount-1;const result={pageCount,lastNo,text:`作成完了 / 元コピー${copiedCount}ページ / 出力${pageCount}ページ${blankAdded?' / 白紙1ページ追加':''}`};const baseOut=outputBaseName(selectedFiles,opt,result);let outName=baseOut+'.pdf';if(opt.splitSize>0&&pageCount>opt.splitSize){const pages=out.getPages();const chunks=Math.ceil(pageCount/opt.splitSize);for(let c=0;c<chunks;c++){const part=await PDFDocument.create();const s=c*opt.splitSize,e=Math.min(s+opt.splitSize,pageCount);const copied=await part.copyPages(out,Array.from({length:e-s},(_,i)=>s+i));copied.forEach(p=>part.addPage(p));downloadBlob(await part.save(),`${baseOut}_part${c+1}_${String(s+1).padStart(4,'0')}-${String(e).padStart(4,'0')}.pdf`)}}else{downloadBlob(await out.save(),outName)}downloadBlob(csvBytes(makeLog(selectedFiles,opt,result,outName)),`pdf_kakou_rireki_${dateTimeStamp()}.csv`,'text/csv;charset=utf-8');saveLog(logRow(selectedFiles,opt,result,outName));setStatus(`${result.text}\n番号範囲：${padNumber(opt.startNo,opt.digits,opt.startNoRaw)}〜${padNumber(lastNo,opt.digits,opt.startNoRaw)}\nPDF加工履歴：LocalStorageに保存しました。`)}catch(err){console.error(err);setStatus(err.userMessage || ('エラーが出ました。PDFが保護されている、またはブラウザで処理できない形式の可能性があります。\n詳細：'+(err.message||err)))}finally{el('run').disabled=false}}
+el('run').onclick=async()=>{if(!selectedFiles.length)return;const preOpt=getOptions();if(!confirmBeforeRun(preOpt))return;el('run').disabled=true;clearDownloads();setPreview('afterPreview',null,'PDF作成中です…');try{setStatus('PDFを処理中です…');const {out,copiedCount,blankAdded,opt}=await buildPdf();const pageCount=out.getPageCount();const lastNo=opt.startNo+pageCount-1;const result={pageCount,lastNo,text:`作成完了 / 元コピー${copiedCount}ページ / 出力${pageCount}ページ${blankAdded?' / 白紙1ページ追加':''}`};const baseOut=outputBaseName(selectedFiles,opt,result);let outName=baseOut+'.pdf';if(opt.splitSize>0&&pageCount>opt.splitSize){const pages=out.getPages();const chunks=Math.ceil(pageCount/opt.splitSize);for(let c=0;c<chunks;c++){const part=await PDFDocument.create();const s=c*opt.splitSize,e=Math.min(s+opt.splitSize,pageCount);const copied=await part.copyPages(out,Array.from({length:e-s},(_,i)=>s+i));copied.forEach(p=>part.addPage(p));downloadBlob(await part.save(),`${baseOut}_part${c+1}_${String(s+1).padStart(4,'0')}-${String(e).padStart(4,'0')}.pdf`)}}else{downloadBlob(await out.save(),outName)}downloadBlob(csvBytes(makeLog(selectedFiles,opt,result,outName)),`pdf_kakou_rireki_${dateTimeStamp()}.csv`,'text/csv;charset=utf-8');saveLog(logRow(selectedFiles,opt,result,outName));setStatus(`${result.text}\n番号範囲：${padNumber(opt.startNo,opt.digits,opt.startNoRaw)}〜${padNumber(lastNo,opt.digits,opt.startNoRaw)}\nPDF加工履歴：LocalStorageに保存しました。`)}catch(err){console.error(err);setStatus(err.userMessage || ('エラーが出ました。PDFが保護されている、またはブラウザで処理できない形式の可能性があります。\n詳細：'+(err.message||err)))}finally{el('run').disabled=false}}
 </script>
 </body>
 </html>
