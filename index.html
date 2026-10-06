@@ -3,100 +3,57 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>顔角度キャプチャ</title>
+<title>二刀流・顔角度キャプチャ</title>
 <style>
-  *{box-sizing:border-box}
-  :root{
-    --bg:#080c14;--panel:#101827;--panel2:#182235;--text:#fff;--muted:#b7c1d4;
-    --line:#33415c;--accent:#fff;
-  }
-  body{
-    margin:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;
-  }
-  .app{width:min(100%,560px);margin:auto;padding:16px 14px 32px}
-  h1{font-size:23px;line-height:1.3;text-align:center;margin:4px 0 6px}
-  .lead{font-size:13px;line-height:1.6;text-align:center;color:var(--muted);margin-bottom:12px}
-  .camera{
-    position:relative;overflow:hidden;border-radius:24px;background:#111827;
-    aspect-ratio:3/4;border:1px solid rgba(255,255,255,.14)
-  }
-  video{width:100%;height:100%;object-fit:cover}
-  #preview{transform:scaleX(-1)}
-  #playback{display:none;background:#000}
-  .shade{
-    position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(ellipse 37% 31% at 50% 34%, transparent 0 73%, rgba(0,0,0,.26) 75%);
-  }
-  .oval{
-    position:absolute;width:52%;height:42%;left:24%;top:13%;
-    border:3px solid rgba(255,255,255,.86);border-radius:50%;pointer-events:none
-  }
-  .centerline{
-    position:absolute;left:50%;top:18%;height:32%;border-left:1px dashed rgba(255,255,255,.42)
-  }
-  .guide{
-    position:absolute;left:16px;right:16px;bottom:16px;
-    background:rgba(5,9,17,.82);backdrop-filter:blur(9px);
-    padding:14px;border-radius:18px;text-align:center
-  }
-  .stage{font-size:12px;color:#b7c1d4;margin-bottom:3px}
-  #arrow{font-size:43px;line-height:44px;height:44px;font-weight:900}
-  #instruction{font-size:23px;line-height:1.35;font-weight:900}
-  #detail{font-size:13px;line-height:1.4;color:#d5dbea;margin-top:4px}
-  #count{font-size:38px;font-weight:900;min-height:4px}
-  .progress{height:7px;margin-top:10px;background:#273247;border-radius:999px;overflow:hidden}
-  #bar{height:100%;width:0;background:#fff;border-radius:999px}
-  .buttons{display:grid;gap:10px;margin-top:13px}
-  button,.download{
-    appearance:none;border:0;border-radius:15px;padding:14px 15px;
-    font-weight:850;font-size:16px;text-align:center;text-decoration:none;cursor:pointer
-  }
-  .primary{background:#fff;color:#08101d}
-  .secondary{background:#172238;color:#fff;border:1px solid #33415c}
-  button:disabled{opacity:.42}
-  .hidden{display:none!important}
-  .hint{
-    font-size:12px;line-height:1.65;color:#aeb8ca;margin:12px 2px 0
-  }
-  #results{display:none;margin-top:22px}
-  .section{
-    background:var(--panel);border:1px solid #25334a;border-radius:20px;
-    padding:14px;margin-top:12px
-  }
-  .section h2{font-size:18px;margin:0 0 4px}
-  .section p{font-size:12px;color:var(--muted);margin:0 0 12px;line-height:1.55}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .candidate{
-    background:#070b12;border:1px solid #27334a;border-radius:14px;padding:7px;
-    min-width:0
-  }
-  .candidate img{
-    width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;display:block;background:#000
-  }
-  .candidate .meta{text-align:center;font-size:11px;margin:7px 0 5px;color:#d8deea}
-  .candidate a{
-    display:block;border-radius:9px;padding:8px 4px;text-align:center;
-    background:#1b263b;color:#fff;text-decoration:none;font-size:11px;font-weight:800
-  }
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
-  .status{
-    display:inline-block;background:#1a263c;border:1px solid #30405d;
-    border-radius:999px;font-size:11px;padding:4px 8px;margin-bottom:9px;color:#dbe4f4
-  }
-  canvas{display:none}
-  @media(max-width:380px){
-    #instruction{font-size:20px}
-    .candidate a{font-size:10px}
-  }
+*{box-sizing:border-box}
+:root{--bg:#080c14;--panel:#101827;--text:#fff;--muted:#b7c1d4;--line:#33415c}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif}
+.app{width:min(100%,560px);margin:auto;padding:16px 14px 32px}
+h1{font-size:23px;text-align:center;margin:4px 0 6px}
+.lead{font-size:13px;line-height:1.6;text-align:center;color:var(--muted);margin-bottom:12px}
+.camera{position:relative;overflow:hidden;border-radius:24px;background:#111827;aspect-ratio:3/4;border:1px solid rgba(255,255,255,.14)}
+video{width:100%;height:100%;object-fit:cover}
+#preview{transform:scaleX(-1)}
+#playback{display:none;background:#000}
+.shade{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 37% 31% at 50% 34%,transparent 0 73%,rgba(0,0,0,.26) 75%)}
+.oval{position:absolute;width:52%;height:42%;left:24%;top:13%;border:3px solid rgba(255,255,255,.86);border-radius:50%;pointer-events:none}
+.centerline{position:absolute;left:50%;top:18%;height:32%;border-left:1px dashed rgba(255,255,255,.42)}
+.guide{position:absolute;left:16px;right:16px;bottom:16px;background:rgba(5,9,17,.82);backdrop-filter:blur(9px);padding:14px;border-radius:18px;text-align:center}
+.stage{font-size:12px;color:#b7c1d4;margin-bottom:3px}
+#arrow{font-size:43px;line-height:44px;height:44px;font-weight:900}
+#instruction{font-size:23px;line-height:1.35;font-weight:900}
+#detail{font-size:13px;line-height:1.4;color:#d5dbea;margin-top:4px}
+#count{font-size:38px;font-weight:900;min-height:4px}
+.progress{height:7px;margin-top:10px;background:#273247;border-radius:999px;overflow:hidden}
+#bar{height:100%;width:0;background:#fff;border-radius:999px}
+.buttons{display:grid;gap:10px;margin-top:13px}
+button,.download{appearance:none;border:0;border-radius:15px;padding:14px 15px;font-weight:850;font-size:16px;text-align:center;text-decoration:none;cursor:pointer}
+.primary{background:#fff;color:#08101d}
+.secondary{background:#172238;color:#fff;border:1px solid #33415c}
+button:disabled{opacity:.42}
+.hidden{display:none!important}
+.hint{font-size:12px;line-height:1.65;color:#aeb8ca;margin:12px 2px 0}
+#results{display:none;margin-top:22px}
+.section{background:var(--panel);border:1px solid #25334a;border-radius:20px;padding:14px;margin-top:12px}
+.section h2{font-size:18px;margin:0 0 4px}
+.section p{font-size:12px;color:var(--muted);margin:0 0 12px;line-height:1.55}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.candidate{background:#070b12;border:1px solid #27334a;border-radius:14px;padding:7px;min-width:0}
+.candidate img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;display:block;background:#000}
+.candidate .meta{text-align:center;font-size:11px;margin:7px 0 5px;color:#d8deea}
+.candidate a{display:block;border-radius:9px;padding:8px 4px;text-align:center;background:#1b263b;color:#fff;text-decoration:none;font-size:11px;font-weight:800}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+.status{display:inline-block;background:#1a263c;border:1px solid #30405d;border-radius:999px;font-size:11px;padding:4px 8px;margin-bottom:9px;color:#dbe4f4}
+canvas{display:none}
+@media(max-width:380px){#instruction{font-size:20px}.candidate a{font-size:10px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <h1>顔角度キャプチャ</h1>
+  <h1>二刀流・顔角度キャプチャ</h1>
   <div class="lead">
-    1本の動画を撮るだけで、<br>
-    <b>右向き3枚＋左向き3枚</b>を自動で切り出します。
+    動画を後から解析せず、<b>撮影中に6コマを同時保存</b>します。<br>
+    撮影終了後、すぐ候補が表示されます。
   </div>
 
   <div class="camera">
@@ -120,47 +77,45 @@
 
   <div class="buttons">
     <button id="startCamera" class="primary">① インカメラを起動</button>
-    <button id="record" class="primary" disabled>② 撮影して6枚を自動抽出</button>
+    <button id="record" class="primary" disabled>② 撮影して6枚を作る</button>
     <button id="retake" class="secondary hidden">撮り直す</button>
   </div>
 
   <div class="hint">
-    顔だけを動かしすぎず、肩は正面のまま。<br>
-    指示に従い左へ、右へ、ゆっくり動かします。
-    途中の角度から3コマずつ自動抽出します。
+    肩は正面のまま、首だけを急にひねらず、ゆっくり動かしてください。<br>
+    左へ向く途中で3枚、右へ向く途中で3枚を自動撮影します。
   </div>
 
   <div id="results">
-    <div class="status">自動抽出完了</div>
+    <div class="status">6枚を撮影済み</div>
 
     <div class="section">
-      <h2>左向き候補</h2>
-      <p>あなたの左へ向く途中から、浅め・中間・やや深めの3角度。</p>
+      <h2>打者向き候補</h2>
+      <p>左へ向く途中の「浅め・中間・深め」の3角度です。</p>
       <div id="batterGrid" class="grid"></div>
     </div>
 
     <div class="section">
-      <h2>右向き候補</h2>
-      <p>あなたの右へ向く途中から、浅め・中間・やや深めの3角度。</p>
+      <h2>投手向き候補</h2>
+      <p>右へ向く途中の「浅め・中間・深め」の3角度です。</p>
       <div id="pitcherGrid" class="grid"></div>
     </div>
 
     <div class="section">
       <h2>保存</h2>
-      <p>各候補はPNGで保存できます。比較用に6枚一覧も作成します。</p>
+      <p>各候補をPNG保存できます。元動画は対応ブラウザのみ保存できます。</p>
       <div class="row">
-        <a id="sheetDownload" class="download secondary">6枚一覧PNG</a>
-        <a id="videoDownload" class="download secondary">元動画</a>
+        <button id="swap" class="secondary">打者／投手を入れ替える</button>
+        <a id="videoDownload" class="download secondary hidden">元動画を保存</a>
       </div>
       <div class="row">
-        <button id="swap" class="secondary">右／左を入れ替える</button>
         <button id="again" class="secondary">もう一度撮る</button>
+        <button id="cameraAgain" class="secondary">カメラへ戻る</button>
       </div>
     </div>
   </div>
 
   <canvas id="workCanvas"></canvas>
-  <canvas id="sheetCanvas"></canvas>
 </div>
 
 <script>
@@ -171,6 +126,7 @@ const startCameraBtn = document.getElementById('startCamera');
 const recordBtn = document.getElementById('record');
 const retakeBtn = document.getElementById('retake');
 const againBtn = document.getElementById('again');
+const cameraAgainBtn = document.getElementById('cameraAgain');
 const swapBtn = document.getElementById('swap');
 
 const stage = document.getElementById('stage');
@@ -184,47 +140,29 @@ const results = document.getElementById('results');
 const batterGrid = document.getElementById('batterGrid');
 const pitcherGrid = document.getElementById('pitcherGrid');
 const videoDownload = document.getElementById('videoDownload');
-const sheetDownload = document.getElementById('sheetDownload');
-
 const workCanvas = document.getElementById('workCanvas');
-const sheetCanvas = document.getElementById('sheetCanvas');
 
 let stream = null;
 let recorder = null;
 let chunks = [];
 let recordingUrl = null;
 let frames = {batter:[], pitcher:[]};
-let currentMime = '';
 let swapped = false;
 
-// Recorder開始を0秒として、各動作の時間帯を固定。
-// 正面 0-2.2
-// 左用 2.2-5.2
-// 正面へ 5.2-6.7
-// 右用 6.7-9.7
-// 正面へ 9.7-11.2
-const SAMPLE_TIMES = {
-  batter:[3.25, 3.85, 4.45],   // 約9° / 14° / 19°のイメージ
-  pitcher:[7.75, 8.35, 8.95]
-};
-const ANGLE_LABELS = ['浅め','中間','深め'];
-
+const labels = ['浅め','中間','深め'];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-function once(el, event){
-  return new Promise(resolve => el.addEventListener(event, resolve, {once:true}));
-}
-
 function supportedMime(){
-  const types = [
+  const types=[
     'video/mp4;codecs=h264',
     'video/mp4',
     'video/webm;codecs=vp9',
     'video/webm;codecs=vp8',
     'video/webm'
   ];
+  if(!window.MediaRecorder) return '';
   for(const t of types){
-    if(window.MediaRecorder && MediaRecorder.isTypeSupported(t)) return t;
+    if(MediaRecorder.isTypeSupported(t)) return t;
   }
   return '';
 }
@@ -234,312 +172,227 @@ async function startCamera(){
     stream = await navigator.mediaDevices.getUserMedia({
       video:{
         facingMode:'user',
-        width:{ideal:1080},
-        height:{ideal:1440}
+        width:{ideal:1280},
+        height:{ideal:1600}
       },
       audio:false
     });
     preview.srcObject = stream;
     await preview.play();
+
     startCameraBtn.classList.add('hidden');
     recordBtn.disabled = false;
-    stage.textContent = '準備OK';
-    instruction.textContent = '顔を白い枠の中央へ';
-    detail.textContent = 'あごを少し引き、カメラを見ます';
-    arrow.textContent = '●';
-  }catch(err){
+    stage.textContent='準備OK';
+    instruction.textContent='顔を白い枠の中央へ';
+    detail.textContent='あごを少し引き、カメラを見ます';
+  }catch(e){
     alert('カメラを起動できませんでした。ブラウザのカメラ許可を確認してください。');
   }
 }
 
-async function phase(ms, stageText, title, sub, arr){
-  stage.textContent = stageText;
-  instruction.textContent = title;
-  detail.textContent = sub;
-  arrow.textContent = arr;
-  bar.style.width = '0%';
-  const start = performance.now();
-  while(performance.now() - start < ms){
-    const p = (performance.now() - start) / ms;
-    bar.style.width = Math.min(100, p*100) + '%';
-    await sleep(35);
-  }
-  bar.style.width = '100%';
+function captureFrame(group,index){
+  const vw = preview.videoWidth;
+  const vh = preview.videoHeight;
+  if(!vw || !vh) return;
+
+  // 顔ガイド位置に合わせた正方形クロップ。
+  const side = Math.round(Math.min(vw*0.64, vh*0.50));
+  let sx = Math.round(vw/2 - side/2);
+  let sy = Math.round(vh*0.095);
+  sx = Math.max(0, Math.min(sx, vw-side));
+  sy = Math.max(0, Math.min(sy, vh-side));
+
+  // 出力は900x900。スマホでも処理が重くなりにくい。
+  const out = 900;
+  workCanvas.width = out;
+  workCanvas.height = out;
+  const ctx = workCanvas.getContext('2d', {alpha:false});
+  ctx.drawImage(preview, sx, sy, side, side, 0, 0, out, out);
+
+  const url = workCanvas.toDataURL('image/png');
+  frames[group].push({label:labels[index], dataUrl:url});
 }
 
 async function countdown(){
-  stage.textContent = '撮影開始';
-  instruction.textContent = 'そのまま';
-  detail.textContent = '3秒後に始まります';
-  arrow.textContent = '●';
+  stage.textContent='撮影開始';
+  instruction.textContent='そのまま';
+  detail.textContent='3秒後に始まります';
+  arrow.textContent='●';
   for(let n=3;n>=1;n--){
-    count.textContent = n;
-    await sleep(700);
+    count.textContent=n;
+    await sleep(650);
   }
-  count.textContent = '';
+  count.textContent='';
+}
+
+async function phase(ms,stageText,title,sub,arr,onProgress){
+  stage.textContent=stageText;
+  instruction.textContent=title;
+  detail.textContent=sub;
+  arrow.textContent=arr;
+  bar.style.width='0%';
+
+  const start=performance.now();
+  let lastP=0;
+  while(performance.now()-start < ms){
+    const p=Math.min(1,(performance.now()-start)/ms);
+    bar.style.width=(p*100)+'%';
+    if(onProgress) onProgress(p,lastP);
+    lastP=p;
+    await sleep(35);
+  }
+  bar.style.width='100%';
+  if(onProgress) onProgress(1,lastP);
+}
+
+function makeSnapper(group){
+  const marks=[0.34,0.55,0.76];
+  const done=[false,false,false];
+  return (p,lastP)=>{
+    marks.forEach((m,i)=>{
+      if(!done[i] && p>=m){
+        done[i]=true;
+        captureFrame(group,i);
+      }
+    });
+  };
+}
+
+function startRecorderIfPossible(){
+  chunks=[];
+  if(!window.MediaRecorder || !stream) return;
+
+  const mime=supportedMime();
+  try{
+    recorder = mime
+      ? new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6000000})
+      : new MediaRecorder(stream,{videoBitsPerSecond:6000000});
+  }catch(e){
+    recorder=null;
+    return;
+  }
+
+  recorder.ondataavailable=e=>{
+    if(e.data && e.data.size) chunks.push(e.data);
+  };
+  recorder.onstop=()=>{
+    if(!chunks.length) return;
+    const type=recorder.mimeType || 'video/webm';
+    const blob=new Blob(chunks,{type});
+    if(recordingUrl) URL.revokeObjectURL(recordingUrl);
+    recordingUrl=URL.createObjectURL(blob);
+
+    playback.src=recordingUrl;
+    const ext=type.includes('mp4')?'mp4':'webm';
+    videoDownload.href=recordingUrl;
+    videoDownload.download='二刀流_顔角度_元動画.'+ext;
+    videoDownload.classList.remove('hidden');
+  };
+
+  try{recorder.start(250)}catch(e){recorder=null}
 }
 
 async function recordSequence(){
   if(!stream) return;
 
-  recordBtn.disabled = true;
-  results.style.display = 'none';
+  recordBtn.disabled=true;
+  results.style.display='none';
   retakeBtn.classList.add('hidden');
-  playback.style.display = 'none';
-  preview.style.display = 'block';
-  overlay.style.display = 'block';
-
-  chunks = [];
-  frames = {batter:[], pitcher:[]};
-  swapped = false;
-
-  currentMime = supportedMime();
-  try{
-    recorder = currentMime
-      ? new MediaRecorder(stream,{mimeType:currentMime,videoBitsPerSecond:8000000})
-      : new MediaRecorder(stream,{videoBitsPerSecond:8000000});
-  }catch(e){
-    recorder = new MediaRecorder(stream);
-  }
-
-  recorder.ondataavailable = e => {
-    if(e.data && e.data.size) chunks.push(e.data);
-  };
-
-  const stopped = new Promise(resolve => recorder.onstop = resolve);
+  frames={batter:[],pitcher:[]};
+  swapped=false;
+  videoDownload.classList.add('hidden');
 
   await countdown();
-  recorder.start(200);
+  startRecorderIfPossible();
 
-  await phase(2200,'正面','正面を向いてください','目線はカメラ。肩は正面のまま','●');
-  await phase(3000,'左用','あなたの左へ ゆっくり','正面から約20°まで、止まらずゆっくり','←');
-  await phase(1500,'中央へ','正面へ戻してください','ゆっくり中央へ','●');
-  await phase(3000,'右用','あなたの右へ ゆっくり','正面から約20°まで、止まらずゆっくり','→');
-  await phase(1500,'終了','正面へ戻してください','そのまま終了します','●');
+  await phase(1800,'正面','正面を向いてください','目線はカメラ。肩は正面のまま','●');
 
-  recorder.stop();
-  await stopped;
+  const batterSnap=makeSnapper('batter');
+  await phase(3000,'打者用','あなたの左へ ゆっくり','止まらず、ゆっくり約20°まで','←',batterSnap);
 
-  await prepareRecording();
-}
+  await phase(1200,'中央へ','正面へ戻してください','ゆっくり中央へ','●');
 
-async function prepareRecording(){
-  const mime = recorder.mimeType || currentMime || 'video/webm';
-  const blob = new Blob(chunks,{type:mime});
+  const pitcherSnap=makeSnapper('pitcher');
+  await phase(3000,'投手用','あなたの右へ ゆっくり','止まらず、ゆっくり約20°まで','→',pitcherSnap);
 
-  if(recordingUrl) URL.revokeObjectURL(recordingUrl);
-  recordingUrl = URL.createObjectURL(blob);
+  await phase(1000,'終了','正面へ戻してください','撮影完了です','●');
 
-  playback.src = recordingUrl;
-  playback.muted = true;
-  playback.playsInline = true;
-
-  if(playback.readyState < 1) await once(playback,'loadedmetadata');
-
-  const ext = mime.includes('mp4') ? 'mp4' : 'webm';
-  videoDownload.href = recordingUrl;
-  videoDownload.download = '顔角度_元動画.' + ext;
-
-  stage.textContent = '抽出中';
-  instruction.textContent = '6枚を自動抽出しています';
-  detail.textContent = '少しだけ待ってください';
-  arrow.textContent = '…';
-  bar.style.width = '35%';
-
-  await extractAllFrames();
-
-  bar.style.width = '100%';
-  preview.style.display = 'none';
-  overlay.style.display = 'none';
-  playback.style.display = 'block';
-  playback.currentTime = 0;
-  playback.muted = false;
-
-  renderCandidates();
-  await buildContactSheet();
-
-  results.style.display = 'block';
-  retakeBtn.classList.remove('hidden');
-  recordBtn.classList.add('hidden');
-
-  results.scrollIntoView({behavior:'smooth', block:'start'});
-}
-
-async function seekVideo(time){
-  const safe = Math.max(0, Math.min(time, Math.max(0, playback.duration - 0.05)));
-  if(Math.abs(playback.currentTime - safe) < 0.02) return;
-  playback.currentTime = safe;
-  await once(playback,'seeked');
-}
-
-function faceCropDataURL(){
-  // 顔は撮影時に白い楕円へ合わせてもらう前提。
-  // 合成素材として使いやすいよう中央上部を正方形で切り出す。
-  const vw = playback.videoWidth;
-  const vh = playback.videoHeight;
-
-  const side = Math.round(Math.min(vw * 0.66, vh * 0.52));
-  let sx = Math.round(vw/2 - side/2);
-  let sy = Math.round(vh * 0.105);
-
-  sx = Math.max(0, Math.min(sx, vw-side));
-  sy = Math.max(0, Math.min(sy, vh-side));
-
-  workCanvas.width = side;
-  workCanvas.height = side;
-  const ctx = workCanvas.getContext('2d');
-
-  // 録画データそのものは鏡像化せず、自然な左右で保存。
-  ctx.drawImage(playback, sx, sy, side, side, 0, 0, side, side);
-  return workCanvas.toDataURL('image/png',1.0);
-}
-
-async function captureAt(time, group, index){
-  await seekVideo(time);
-  // seek直後の描画安定待ち
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  const dataUrl = faceCropDataURL();
-  return {
-    group,
-    index,
-    time,
-    label:ANGLE_LABELS[index],
-    dataUrl
-  };
-}
-
-async function extractAllFrames(){
-  frames = {batter:[], pitcher:[]};
-
-  for(let i=0;i<SAMPLE_TIMES.batter.length;i++){
-    frames.batter.push(await captureAt(SAMPLE_TIMES.batter[i],'batter',i));
-    bar.style.width = (35 + (i+1)*8) + '%';
+  if(recorder && recorder.state!=='inactive'){
+    try{recorder.stop()}catch(e){}
   }
 
-  for(let i=0;i<SAMPLE_TIMES.pitcher.length;i++){
-    frames.pitcher.push(await captureAt(SAMPLE_TIMES.pitcher[i],'pitcher',i));
-    bar.style.width = (59 + (i+1)*8) + '%';
-  }
+  showResultsImmediately();
 }
 
-function candidateCard(item, groupName, num){
-  const div = document.createElement('div');
-  div.className = 'candidate';
+function card(item,groupName,num){
+  const div=document.createElement('div');
+  div.className='candidate';
 
-  const img = document.createElement('img');
-  img.src = item.dataUrl;
-  img.alt = `${groupName}候補${num}`;
+  const img=document.createElement('img');
+  img.src=item.dataUrl;
+  img.alt=`${groupName}候補${num}`;
 
-  const meta = document.createElement('div');
-  meta.className = 'meta';
-  meta.textContent = `${num}. ${item.label}`;
+  const meta=document.createElement('div');
+  meta.className='meta';
+  meta.textContent=`${num}. ${item.label}`;
 
-  const a = document.createElement('a');
-  a.href = item.dataUrl;
-  a.download = `${groupName}_候補${num}_${item.label}.png`;
-  a.textContent = 'PNG保存';
+  const a=document.createElement('a');
+  a.href=item.dataUrl;
+  a.download=`${groupName}_候補${num}_${item.label}.png`;
+  a.textContent='PNG保存';
 
   div.append(img,meta,a);
   return div;
 }
 
 function renderCandidates(){
-  batterGrid.innerHTML = '';
-  pitcherGrid.innerHTML = '';
+  batterGrid.innerHTML='';
+  pitcherGrid.innerHTML='';
 
-  const b = swapped ? frames.pitcher : frames.batter;
-  const p = swapped ? frames.batter : frames.pitcher;
+  const b=swapped?frames.pitcher:frames.batter;
+  const p=swapped?frames.batter:frames.pitcher;
 
-  b.forEach((item,i) => batterGrid.appendChild(candidateCard(item,'左向き',i+1)));
-  p.forEach((item,i) => pitcherGrid.appendChild(candidateCard(item,'右向き',i+1)));
+  b.forEach((item,i)=>batterGrid.appendChild(card(item,'打者向き',i+1)));
+  p.forEach((item,i)=>pitcherGrid.appendChild(card(item,'投手向き',i+1)));
 }
 
-async function loadImage(src){
-  return new Promise((resolve,reject)=>{
-    const img = new Image();
-    img.onload=()=>resolve(img);
-    img.onerror=reject;
-    img.src=src;
-  });
-}
-
-async function buildContactSheet(){
-  const b = swapped ? frames.pitcher : frames.batter;
-  const p = swapped ? frames.batter : frames.pitcher;
-
-  const all = [...b,...p];
-  const imgs = [];
-  for(const item of all) imgs.push(await loadImage(item.dataUrl));
-
-  const W = 1500;
-  const margin = 60;
-  const gap = 30;
-  const labelH = 75;
-  const cell = Math.floor((W - margin*2 - gap*2)/3);
-  const H = margin + labelH + cell + 70 + labelH + cell + margin;
-
-  sheetCanvas.width = W;
-  sheetCanvas.height = H;
-  const ctx = sheetCanvas.getContext('2d');
-
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0,0,W,H);
-  ctx.fillStyle = '#111111';
-  ctx.font = 'bold 40px sans-serif';
-  ctx.fillText('左向き候補', margin, margin+42);
-
-  let y1 = margin + labelH;
-  for(let i=0;i<3;i++){
-    const x = margin + i*(cell+gap);
-    ctx.drawImage(imgs[i],x,y1,cell,cell);
-    ctx.fillStyle='#111';
-    ctx.font='28px sans-serif';
-    ctx.fillText(`${i+1}. ${ANGLE_LABELS[i]}`,x,y1+cell+40);
-  }
-
-  const title2Y = y1 + cell + 70;
-  ctx.fillStyle='#111';
-  ctx.font='bold 40px sans-serif';
-  ctx.fillText('右向き候補',margin,title2Y+42);
-
-  const y2 = title2Y + labelH;
-  for(let i=0;i<3;i++){
-    const x = margin + i*(cell+gap);
-    ctx.drawImage(imgs[i+3],x,y2,cell,cell);
-    ctx.fillStyle='#111';
-    ctx.font='28px sans-serif';
-    ctx.fillText(`${i+1}. ${ANGLE_LABELS[i]}`,x,y2+cell+40);
-  }
-
-  const url = sheetCanvas.toDataURL('image/png',1.0);
-  sheetDownload.href = url;
-  sheetDownload.download = '顔角度_6枚一覧.png';
-}
-
-async function swapGroups(){
-  swapped = !swapped;
+function showResultsImmediately(){
   renderCandidates();
-  await buildContactSheet();
+
+  stage.textContent='完了';
+  instruction.textContent='6枚できました';
+  detail.textContent='下に候補を表示します';
+  arrow.textContent='✓';
+  bar.style.width='100%';
+
+  results.style.display='block';
+  retakeBtn.classList.remove('hidden');
+  recordBtn.classList.add('hidden');
+
+  results.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function resetForRetake(){
-  playback.pause();
-  playback.removeAttribute('src');
-  playback.load();
-  playback.style.display = 'none';
-  preview.style.display = 'block';
-  overlay.style.display = 'block';
-
-  results.style.display = 'none';
+  results.style.display='none';
   retakeBtn.classList.add('hidden');
   recordBtn.classList.remove('hidden');
-  recordBtn.disabled = false;
+  recordBtn.disabled=false;
 
-  stage.textContent = '準備OK';
-  instruction.textContent = '顔を白い枠の中央へ';
-  detail.textContent = 'あごを少し引き、カメラを見ます';
-  arrow.textContent = '●';
-  bar.style.width = '0%';
+  stage.textContent='準備OK';
+  instruction.textContent='顔を白い枠の中央へ';
+  detail.textContent='あごを少し引き、カメラを見ます';
+  arrow.textContent='●';
+  bar.style.width='0%';
+}
+
+function swapGroups(){
+  swapped=!swapped;
+  renderCandidates();
+}
+
+function backToCamera(){
+  results.style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 startCameraBtn.addEventListener('click',startCamera);
@@ -547,6 +400,7 @@ recordBtn.addEventListener('click',recordSequence);
 retakeBtn.addEventListener('click',resetForRetake);
 againBtn.addEventListener('click',resetForRetake);
 swapBtn.addEventListener('click',swapGroups);
+cameraAgainBtn.addEventListener('click',backToCamera);
 </script>
 </body>
 </html>
